@@ -5,30 +5,34 @@
 // speed is set with value of 0-255 but 255 is the slowest speed and 0 the fastest
 
 int dirPin = 2;
-int stepperPin = 3;
-int en = 5;
-int state = 0;
-int oldSpeed = 0;
+int stepperPin = 27;
+int en = 25;
 int rst = 4;
+const int trigPin = 35;
+const int echoPin = 33;
 
-const int trigPin = 7;
-const int echoPin = 8;
+uint32_t state = 0;
+uint32_t oldSpeed = 0;
+
+
 
 void setup() {
-    Serial.begin(9600);
+    Serial.begin(115200);
     pinMode(dirPin, OUTPUT);
     pinMode(stepperPin, OUTPUT);
-    pinMode(en, OUTPUT);   //enable, active low
+    // pinMode(en, OUTPUT);   //enable, active low
     pinMode(rst, OUTPUT);  //rst, active low
     digitalWrite(rst, HIGH);
 
-    pinMode(trigPin, OUTPUT);
-    pinMode(echoPin, INPUT);
+    // pinMode(trigPin, OUTPUT);
+    // pinMode(echoPin, INPUT);
 
-    digitalWrite(en, LOW);
+    // digitalWrite(en, LOW);
     digitalWrite(dirPin, HIGH);
     delay(1000);
+    analogWriteResolution(en, 12);
     randomSeed(analogRead(A0));
+    Serial.println("-> setup ready.");
 }
 
 //make some steps
@@ -43,7 +47,7 @@ void step(int stepsit) {
     }
 }
 
-int motors(int robot_direction, int robot_speed)  // this determines how many steps to what direction
+uint32_t motors(int robot_direction, int robot_speed)  // this determines how many steps to what direction
 {
     switch (robot_direction) {
         case 0:
@@ -130,22 +134,22 @@ int ultra() {
 }
 
 void loop() {  // some simple object avoidance
-    int view = ultra();
-    view = min(view, 100);
+    // int view = ultra();
+    // view = min(view, 100);
 
-    if (view < 30) {
-        if (view < 15) {
-            state = motors(1, 100);  //backwards
-            delay(800);
-        }
-        int way = random(4, 6);  //right or left
-        while (ultra() < 30)
-            state = motors(way, 70);
-        delay(110);
-    }
+    // if (view < 30) {
+    //     if (view < 15) {
+    //         state = motors(1, 100);  //backwards
+    //         delay(800);
+    //     }
+    //     int way = random(4, 6);  //right or left
+    //     while (ultra() < 30)
+    //         state = motors(way, 70);
+    //     delay(110);
+    // }
 
-    view = map(view, 0, 100, 5, 150);
-    view = 255 - view;
-    state = motors(2, view);  //go forward, speed depends on distance ahead
+    // view = map(view, 0, 100, 5, 150);
+    // view = 255 - view;
+    state = motors(2, 100);  //go forward, speed depends on distance ahead
     delay(10);
 }
