@@ -1,155 +1,114 @@
 #include <Arduino.h>
 #include <analogWrite.h>
+#include <WiFi.h>
+#include <WiFiUdp.h>
 
-// object avoidance robot, two DC motors driven by a A4988 module
-// speed is set with value of 0-255 but 255 is the slowest speed and 0 the fastest
+const char *ssid = "M5AP";
+const char *password = "77777777";
 
-int dirPin = 2;
-int stepperPin = 27;
-int en = 25;
-int rst = 4;
-const int trigPin = 35;
-const int echoPin = 33;
+WiFiServer server(80);
 
-uint32_t state = 0;
-uint32_t oldSpeed = 0;
+WiFiUDP Udp1;
 
-
-
-void setup() {
-    Serial.begin(115200);
-    pinMode(dirPin, OUTPUT);
-    pinMode(stepperPin, OUTPUT);
-    // pinMode(en, OUTPUT);   //enable, active low
-    pinMode(rst, OUTPUT);  //rst, active low
-    digitalWrite(rst, HIGH);
-
-    // pinMode(trigPin, OUTPUT);
-    // pinMode(echoPin, INPUT);
-
-    // digitalWrite(en, LOW);
-    digitalWrite(dirPin, HIGH);
-    delay(1000);
-    analogWriteResolution(en, 12);
-    randomSeed(analogRead(A0));
-    Serial.println("-> setup ready.");
-}
-
-//make some steps
-void step(int stepsit) {
-    //digitalWrite(dirPin,dir);
-    //delay(50);
-    for (int i = 0; i < stepsit; i++) {
-        digitalWrite(stepperPin, HIGH);
-        delayMicroseconds(800);
-        digitalWrite(stepperPin, LOW);
-        delayMicroseconds(800);
-    }
-}
-
-uint32_t motors(int robot_direction, int robot_speed)  // this determines how many steps to what direction
+void setup()
 {
-    switch (robot_direction) {
-        case 0:
-            if (state != robot_direction) {
-                digitalWrite(en, HIGH);
-                robot_direction = state;
-            }
-            break;
-        case 1:
-            if (state != robot_direction || oldSpeed != robot_speed) {
-                digitalWrite(rst, LOW);
-                delayMicroseconds(5);
-                digitalWrite(rst, HIGH);
+    Serial.begin(115200);
+    uint64_t chipid = ESP.getEfuseMac();
+    String str = ssid + String((uint32_t)(chipid >> 32), HEX);
+    //Set device in STA mode to begin with
+    WiFi.softAPConfig(IPAddress(192, 168, 4, 1),
+                      IPAddress(192, 168, 4, 1),
+                      IPAddress(255, 255, 255, 0));
 
-                analogWrite(en, robot_speed);
-                oldSpeed = robot_speed;
+    WiFi.softAP(str.c_str(), password);
+    IPAddress myIP = WiFi.softAPIP();
+    Serial.print("AP IP address: ");
+    Serial.println(myIP);
+    server.begin();
 
-                step(2);
-            }
-            break;
-        case 2:
-            if (state != robot_direction || oldSpeed != robot_speed) {
-                digitalWrite(rst, LOW);
-                delayMicroseconds(5);
-                digitalWrite(rst, HIGH);
-                analogWrite(en, robot_speed);
-                oldSpeed = robot_speed;
-                //step(false, 2);
-            }
-            break;
-        case 4:
-            if (state != robot_direction || oldSpeed != robot_speed) {
-                digitalWrite(rst, LOW);
-                delayMicroseconds(5);
-                digitalWrite(rst, HIGH);
-                digitalWrite(en, LOW);
-                analogWrite(en, robot_speed);
-                oldSpeed = robot_speed;
-                step(1);
-            }
-            break;
-        case 5:
-            if (state != robot_direction || oldSpeed != robot_speed) {
-                digitalWrite(rst, LOW);
-                delayMicroseconds(5);
-                digitalWrite(rst, HIGH);
-                digitalWrite(en, LOW);
-                analogWrite(en, robot_speed);
-                oldSpeed = robot_speed;
-                step(3);
-            }
-            break;
-    }
+    Udp1.begin(1003);
 
-    return (robot_direction);
+    analogWriteResolution(19, 12);
 }
 
-int ultra() {
-    // just get distance:
+uint8_t SendBuff[9] = {0xAA, 0x55,
+                       0x00,
+                       0x00,
+                       0x00,
+                       0x00,
+                       0x00,
+                       0x00,
+                       0xee};
 
-    int result = 0;
-    unsigned long kesto = 0;
-    unsigned long matka = 0;
-    for (int i = 0; i < 3; i++) {
-        digitalWrite(trigPin, LOW);
-        delayMicroseconds(2);
-        digitalWrite(trigPin, HIGH);
+int16_t speed_buff[4] = {0};
+int8_t speed_sendbuff[4] = {0};
+uint32_t count = 0;
+uint8_t IIC_ReState = I2C_ERROR_NO_BEGIN;
 
-        delayMicroseconds(10);
+void Setspeed(int16_t Vtx, int16_t Vty, int16_t Wt)
+{
+    Wt = (Wt > 100) ? 100 : Wt;
+    Wt = (Wt < -100) ? -100 : Wt;
 
-        digitalWrite(trigPin, LOW);
-        delayMicroseconds(1);
+    Vtx = (Vtx > 100) ? 100 : Vtx;
+    Vtx = (Vtx < -100) ? -100 : Vtx;
+    Vty = (Vty > 100) ? 100 : Vty;
+    Vty = (Vty < -100) ? -100 : Vty;
 
-        kesto = pulseIn(echoPin, HIGH);
+    Vtx = (Wt != 0) ? Vtx * (100 - abs(Wt)) / 100 : Vtx;
+    Vty = (Wt != 0) ? Vty * (100 - abs(Wt)) / 100 : Vty;
 
-        matka = matka + (kesto / 58.2);
-        delay(10);
+    speed_buff[0] = Vty - Vtx - Wt;
+    speed_buff[1] = Vty + Vtx + Wt;
+    speed_buff[3] = Vty - Vtx + Wt;
+    speed_buff[2] = Vty + Vtx - Wt;
+
+    for (int i = 0; i < 4; i++)
+    {
+        speed_buff[i] = (speed_buff[i] > 100) ? 100 : speed_buff[i];
+        speed_buff[i] = (speed_buff[i] < -100) ? -100 : speed_buff[i];
+        speed_sendbuff[i] = speed_buff[i];
     }
-    matka /= 3;
-    delay(10);
-    Serial.println(matka);
-    result = matka;
-    return (result);
+    Serial.printf("data: %s",(uint8_t *)speed_sendbuff);
 }
 
-void loop() {  // some simple object avoidance
-    // int view = ultra();
-    // view = min(view, 100);
+void loop()
+{
+    int udplength = Udp1.parsePacket();
+    if (udplength)
+    {
+        char udodata[udplength];
+        Udp1.read(udodata, udplength);
+        IPAddress udp_client = Udp1.remoteIP();
+        if ((udodata[0] == 0xAA) && (udodata[1] == 0x55) && (udodata[7] == 0xee))
+        {
+            for (int i = 0; i < 8; i++)
+            {
+                Serial.printf("%02X ", udodata[i]);
+            }
+            Serial.println();
+            if (udodata[6] == 0x01)
+            {
+                Serial.printf("udodata[6] == 0x01 -> %d %d %d\n",udodata[3] - 100, udodata[4] - 100, udodata[5] - 100);
+                int ledout = map(udodata[4], 0, 190, 0, 255);
+                Serial.printf("led set to %d\n",ledout);
+                analogWrite(19,ledout);
+                // Setspeed(udodata[3] - 100, udodata[4] - 100, udodata[5] - 100);
+            }
+            else
+            {
+                Serial.printf("udodata[6] != 0x01 -> %d %d %d\n",0,0,0);
+            }
+        }
+        else
+        {
+            Serial.printf("udodata[6] != 0x01 -> %d %d %d\n", 0, 0, 0);
+        }
+    }
+    count++;
+    if (count > 100)
+    {
+        count = 0;
 
-    // if (view < 30) {
-    //     if (view < 15) {
-    //         state = motors(1, 100);  //backwards
-    //         delay(800);
-    //     }
-    //     int way = random(4, 6);  //right or left
-    //     while (ultra() < 30)
-    //         state = motors(way, 70);
-    //     delay(110);
-    // }
-
-    // view = map(view, 0, 100, 5, 150);
-    // view = 255 - view;
-    state = motors(2, 100);  //go forward, speed depends on distance ahead
-    delay(10);
+    }
 }
