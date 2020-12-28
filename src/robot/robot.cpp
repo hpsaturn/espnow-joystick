@@ -89,7 +89,7 @@ void loop()
             if (udodata[6] == 0x01)
             {
                 Serial.printf("udodata[6] == 0x01 -> %d %d %d\n",udodata[3] - 100, udodata[4] - 100, udodata[5] - 100);
-                int ledout = map(udodata[4], 0, 190, 0, 255);
+                int ledout = map(udodata[4], 0, 192, 0, 255);
                 Serial.printf("led set to %d\n",ledout);
                 analogWrite(19,ledout);
                 // Setspeed(udodata[3] - 100, udodata[4] - 100, udodata[5] - 100);
