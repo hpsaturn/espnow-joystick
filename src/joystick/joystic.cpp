@@ -21,7 +21,7 @@ IPAddress subnet(255, 255, 0, 0);
 IPAddress primaryDNS(8, 8, 8, 8);    //optional
 IPAddress secondaryDNS(8, 8, 4, 4);  //optional
 
-const char *ssid = "M5AP";
+const char *ssid = "ROBOTAP";
 const char *password = "77777777";
 
 WiFiUDP Udp;
@@ -139,7 +139,7 @@ void setup() {
         } else {
             int count = 0;
             for (int i = 0; i < n; ++i) {
-                if (WiFi.SSID(i).indexOf("M5AP") != -1) {
+                if (WiFi.SSID(i).indexOf("ROBOTAP") != -1) {
                     if (count == 0) {
                         Disbuff.setTextColor(GREEN);
                     } else {
