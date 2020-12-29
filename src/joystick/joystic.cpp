@@ -28,9 +28,16 @@ IPAddress secondaryDNS(8, 8, 4, 4);  //optional
 const char *ssid = "ROBOTAP";
 const char *password = "77777777";
 
-WiFiUDP Udp;
-uint32_t send_count = 0;
-uint8_t system_state = 0;
+WiFiUDP udp;
+
+char APName[20];
+String WfifAPBuff[16];
+uint32_t count_bn_a = 0, choose = 0;
+String ssidname;
+
+uint8_t adc_value[5] = {0};
+uint16_t AngleBuff[4];
+uint32_t count = 0;
 
 uint8_t buffer[128];
 size_t message_length;
@@ -82,9 +89,9 @@ bool sendMessage(uint8_t ax, uint8_t ay, uint8_t az, uint8_t ck) {
     sendBuff[message_length + 3] = 0xee;  // UDP end?
 
     if (WiFi.status() == WL_CONNECTED) {
-        Udp.beginPacket(IPAddress(192, 168, 4, 1), 1000 + SYSNUM);
-        Udp.write(sendBuff, message_length + 4);
-        Udp.endPacket();
+        udp.beginPacket(IPAddress(192, 168, 4, 1), 1000 + SYSNUM);
+        udp.write(sendBuff, message_length + 4);
+        udp.endPacket();
         return true;
     }
 
@@ -112,14 +119,6 @@ uint16_t I2CRead16bit(uint8_t Addr) {
     return ReData;
 }
 
-bool joys_l = false;
-uint8_t color[3] = {0, 100, 0};
-
-char APName[20];
-String WfifAPBuff[16];
-uint32_t count_bn_a = 0, choose = 0;
-String ssidname;
-
 void setup() {
     M5.begin();
     Wire.begin(0, 26, 10000);
@@ -143,6 +142,7 @@ void setup() {
     Serial.printf("Res0 = %02X \r\n", res);
 
     M5.update();
+
     if ((EEPROM.read(0) != 0x56) || (M5.BtnA.read() == 1)) {
         WiFi.mode(WIFI_STA);
         int n = WiFi.scanNetworks();
@@ -227,7 +227,7 @@ void setup() {
         Serial.print(".");
     }
 
-    Udp.begin(2000);
+    udp.begin(2000);
 
     Disbuff.pushImage(0, 0, 20, 20, (uint16_t *)connect_on);
     Disbuff.pushSprite(0, 0);
@@ -247,10 +247,6 @@ void drawValues(uint8_t ax, uint8_t ay, uint8_t az, uint16_t adc) {
     Disbuff.pushSprite(0, 0);
 }
 
-uint8_t adc_value[5] = {0};
-uint16_t AngleBuff[4];
-uint32_t count = 0;
-
 void loop() {
     for (int i = 0; i < 5; i++) {
         adc_value[i] = I2CRead8bit(0x60 + i);
@@ -260,7 +256,6 @@ void loop() {
         AngleBuff[i] = I2CRead16bit(0x50 + i * 2);
     }
 
-    delay(10);
 
     if (WiFi.status() != WL_CONNECTED) {
         Disbuff.pushImage(0, 0, 20, 20, (uint16_t *)connect_off);
