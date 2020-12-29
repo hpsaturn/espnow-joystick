@@ -92,6 +92,7 @@ void loop() {
             for (int i = 0; i < udplength-4; i++) {
                 buffer[i] = udodata[i+3];
             }
+            
             decodeMessage(udplength-4);
             
             if (message.ck == 0x01) {

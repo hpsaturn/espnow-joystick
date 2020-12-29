@@ -1,9 +1,10 @@
 #include <M5StickC.h>
 #include <WiFi.h>
 #include <WiFiUdp.h>
-#include "EEPROM.h"
-#include <pb_encode.h>
 #include <pb_decode.h>
+#include <pb_encode.h>
+
+#include "EEPROM.h"
 #include "simple.pb.h"
 
 #define EEPROM_SIZE 64
@@ -38,6 +39,7 @@ bool status;
 bool sendMessage(uint8_t ax, uint8_t ay, uint8_t az, uint8_t ck) {
     /* This is the buffer where we will store our message. */
     SimpleMessage message = SimpleMessage_init_zero;
+
     /* Allocate space on the stack to store the message data.
     *
     * Nanopb generates simple struct definitions for all the messages.
@@ -49,7 +51,7 @@ bool sendMessage(uint8_t ax, uint8_t ay, uint8_t az, uint8_t ck) {
     /* Create a stream that will write to our buffer. */
     pb_ostream_t stream = pb_ostream_from_buffer(buffer, sizeof(buffer));
 
-    /* Fill in the lucky number */
+    /* Fill the proto values (joystick angle)*/
     message.ax = ax;
     message.ay = ay;
     message.az = az;
@@ -58,34 +60,35 @@ bool sendMessage(uint8_t ax, uint8_t ay, uint8_t az, uint8_t ck) {
     /* Now we are ready to encode the message! */
     status = pb_encode(&stream, SimpleMessage_fields, &message);
     message_length = stream.bytes_written;
-   /* Then just check for any errors.. */
+    /* Then just check for any errors.. */
 
     if (!status) {
         printf("Encoding failed: %s\n", PB_GET_ERROR(&stream));
         return false;
     }
 
-    uint8_t sendBuff[message_length+4];
+    /* Now we are ready to send it */
 
-    sendBuff[0] = 0xAA;
+    uint8_t sendBuff[message_length + 4];
+
+    sendBuff[0] = 0xAA;  // UDP header?
     sendBuff[1] = 0x55;
-    sendBuff[2] = SYSNUM;
+    sendBuff[2] = SYSNUM;  // UDP type?
 
     for (int i = 0; i < message_length; i++) {
-        sendBuff[i+3] = buffer[i];
+        sendBuff[i + 3] = buffer[i];  // proto message
     }
 
-    sendBuff[message_length+3] = 0xee;
+    sendBuff[message_length + 3] = 0xee;  // UDP end?
 
     if (WiFi.status() == WL_CONNECTED) {
         Udp.beginPacket(IPAddress(192, 168, 4, 1), 1000 + SYSNUM);
-        Udp.write(sendBuff, message_length+4);
+        Udp.write(sendBuff, message_length + 4);
         Udp.endPacket();
         return true;
     }
 
     return false;
-
 }
 
 uint8_t I2CRead8bit(uint8_t Addr) {
@@ -138,7 +141,7 @@ void setup() {
 
     uint8_t res = I2CRead8bit(0x32);
     Serial.printf("Res0 = %02X \r\n", res);
-    
+
     M5.update();
     if ((EEPROM.read(0) != 0x56) || (M5.BtnA.read() == 1)) {
         WiFi.mode(WIFI_STA);
@@ -248,11 +251,6 @@ uint8_t adc_value[5] = {0};
 uint16_t AngleBuff[4];
 uint32_t count = 0;
 
-uint8_t ax = 0;
-uint8_t ay = 0; 
-uint8_t az = 0;
-
-
 void loop() {
     for (int i = 0; i < 5; i++) {
         adc_value[i] = I2CRead8bit(0x60 + i);
@@ -268,21 +266,15 @@ void loop() {
         Disbuff.pushImage(0, 0, 20, 20, (uint16_t *)connect_off);
         Disbuff.pushSprite(0, 0);
 
-        count++;
-        if (count > 500) {
+        if (count++ > 1000) {
             WiFi.config(local_IP, gateway, subnet, primaryDNS, secondaryDNS);
             count = 0;
         }
-    } else {
-        ax = map(AngleBuff[0], 0, 4000, 0, 200);
-        ay = map(AngleBuff[1], 0, 4000, 0, 200);
-        az = map(AngleBuff[2], 0, 4000, 0, 200);
-        /*
-		Disbuff.pushImage(0,0,20,20,(uint16_t *)connect_on);
-		Disbuff.pushSprite(0,0);
-		count = 0;
-		*/
 
+    } else {
+        uint8_t ax = map(AngleBuff[0], 0, 4000, 0, 200);
+        uint8_t ay = map(AngleBuff[1], 0, 4000, 0, 200);
+        uint8_t az = map(AngleBuff[2], 0, 4000, 0, 200);
         uint8_t ck = 0x00;
 
         if ((ax > 110) || (ax < 90) ||
@@ -293,6 +285,4 @@ void loop() {
         drawValues(ax, ay, az, adc_value[4]);
         sendMessage(ax, ay, az, ck);
     }
-
-    
 }
