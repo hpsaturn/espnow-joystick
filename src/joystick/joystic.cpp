@@ -2,6 +2,9 @@
 #include <WiFi.h>
 #include <WiFiUdp.h>
 #include "EEPROM.h"
+#include <pb_encode.h>
+#include <pb_decode.h>
+#include "simple.pb.h"
 
 #define EEPROM_SIZE 64
 
@@ -28,20 +31,61 @@ WiFiUDP Udp;
 uint32_t send_count = 0;
 uint8_t system_state = 0;
 
-void I2CWrite1Byte(uint8_t Addr, uint8_t Data) {
-    Wire.beginTransmission(0x38);
-    Wire.write(Addr);
-    Wire.write(Data);
-    Wire.endTransmission();
-}
+uint8_t buffer[128];
+size_t message_length;
+bool status;
 
-void I2CWritebuff(uint8_t Addr, uint8_t *Data, uint16_t Length) {
-    Wire.beginTransmission(0x38);
-    Wire.write(Addr);
-    for (int i = 0; i < Length; i++) {
-        Wire.write(Data[i]);
+bool sendMessage(uint8_t ax, uint8_t ay, uint8_t az, uint8_t ck) {
+    /* This is the buffer where we will store our message. */
+    SimpleMessage message = SimpleMessage_init_zero;
+    /* Allocate space on the stack to store the message data.
+    *
+    * Nanopb generates simple struct definitions for all the messages.
+    * - check out the contents of simple.pb.h!
+    * It is a good idea to always initialize your structures
+    * so that you do not have garbage data from RAM in there.
+    */
+
+    /* Create a stream that will write to our buffer. */
+    pb_ostream_t stream = pb_ostream_from_buffer(buffer, sizeof(buffer));
+
+    /* Fill in the lucky number */
+    message.ax = ax;
+    message.ay = ay;
+    message.az = az;
+    message.ck = ck;
+
+    /* Now we are ready to encode the message! */
+    status = pb_encode(&stream, SimpleMessage_fields, &message);
+    message_length = stream.bytes_written;
+   /* Then just check for any errors.. */
+
+    if (!status) {
+        printf("Encoding failed: %s\n", PB_GET_ERROR(&stream));
+        return false;
     }
-    Wire.endTransmission();
+
+    uint8_t sendBuff[message_length+4];
+
+    sendBuff[0] = 0xAA;
+    sendBuff[1] = 0x55;
+    sendBuff[2] = SYSNUM;
+
+    for (int i = 0; i < message_length; i++) {
+        sendBuff[i+3] = buffer[i];
+    }
+
+    sendBuff[message_length+3] = 0xee;
+
+    if (WiFi.status() == WL_CONNECTED) {
+        Udp.beginPacket(IPAddress(192, 168, 4, 1), 1000 + SYSNUM);
+        Udp.write(sendBuff, message_length+4);
+        Udp.endPacket();
+        return true;
+    }
+
+    return false;
+
 }
 
 uint8_t I2CRead8bit(uint8_t Addr) {
@@ -68,26 +112,12 @@ uint16_t I2CRead16bit(uint8_t Addr) {
 bool joys_l = false;
 uint8_t color[3] = {0, 100, 0};
 
-uint8_t SendBuff[8] = {0xAA, 0x55,
-                       SYSNUM,
-                       0x00, 0x00,
-                       0x00, 0x00,
-                       0xee};
-
-void SendUDP() {
-    if (WiFi.status() == WL_CONNECTED) {
-        Udp.beginPacket(IPAddress(192, 168, 4, 1), 1000 + SYSNUM);
-        Udp.write(SendBuff, 8);
-        Udp.endPacket();
-    }
-}
-
 char APName[20];
 String WfifAPBuff[16];
 uint32_t count_bn_a = 0, choose = 0;
 String ssidname;
+
 void setup() {
-    // put your setup code here, to run once:
     M5.begin();
     Wire.begin(0, 26, 10000);
     EEPROM.begin(EEPROM_SIZE);
@@ -108,22 +138,7 @@ void setup() {
 
     uint8_t res = I2CRead8bit(0x32);
     Serial.printf("Res0 = %02X \r\n", res);
-    /*
-	if( res & 0x02 )
-	{
-		I2CWrite1Byte(0x10,0x02);
-	}
-	else
-	{
-		Disbuff.setTextSize(1);
-		Disbuff.setTextColor(GREEN);
-		Disbuff.fillRect(0,0,80,20,Disbuff.color565(50,50,50));
-		Disbuff.setCursor(5,20);
-		Disbuff.printf("calibration");
-		Disbuff.pushSprite(0,0);
-		I2CWrite1Byte( 0x32 , 0x01 );
-	}
-	*/
+    
     M5.update();
     if ((EEPROM.read(0) != 0x56) || (M5.BtnA.read() == 1)) {
         WiFi.mode(WIFI_STA);
@@ -215,9 +230,29 @@ void setup() {
     Disbuff.pushSprite(0, 0);
 }
 
+void drawValues(uint8_t ax, uint8_t ay, uint8_t az, uint16_t adc) {
+    Disbuff.fillRect(0, 30, 80, 130, BLACK);
+    Disbuff.setCursor(10, 30);
+    Disbuff.printf("%04d", ax);
+    Disbuff.setCursor(10, 45);
+    Disbuff.printf("%04d", ay);
+    Disbuff.setCursor(10, 60);
+    Disbuff.printf("%04d", az);
+
+    Disbuff.setCursor(10, 100);
+    Disbuff.printf("%04X", adc);
+    Disbuff.pushSprite(0, 0);
+}
+
 uint8_t adc_value[5] = {0};
 uint16_t AngleBuff[4];
 uint32_t count = 0;
+
+uint8_t ax = 0;
+uint8_t ay = 0; 
+uint8_t az = 0;
+
+
 void loop() {
     for (int i = 0; i < 5; i++) {
         adc_value[i] = I2CRead8bit(0x60 + i);
@@ -239,33 +274,25 @@ void loop() {
             count = 0;
         }
     } else {
-        SendBuff[3] = map(AngleBuff[0], 0, 4000, 0, 200);
-        SendBuff[4] = map(AngleBuff[1], 0, 4000, 0, 200);
-        SendBuff[5] = map(AngleBuff[2], 0, 4000, 0, 200);
+        ax = map(AngleBuff[0], 0, 4000, 0, 200);
+        ay = map(AngleBuff[1], 0, 4000, 0, 200);
+        az = map(AngleBuff[2], 0, 4000, 0, 200);
         /*
 		Disbuff.pushImage(0,0,20,20,(uint16_t *)connect_on);
 		Disbuff.pushSprite(0,0);
 		count = 0;
 		*/
-        if ((SendBuff[3] > 110) || (SendBuff[3] < 90) ||
-            (SendBuff[4] > 110) || (SendBuff[4] < 90) ||
-            (SendBuff[5] > 110) || (SendBuff[5] < 90)) {
-            SendBuff[6] = 0x01;
-        } else {
-            SendBuff[6] = 0x00;
+
+        uint8_t ck = 0x00;
+
+        if ((ax > 110) || (ax < 90) ||
+            (ay > 110) || (ay < 90) ||
+            (az > 110) || (az < 90)) {
+            ck = 0x01;
         }
-        SendUDP();
+        drawValues(ax, ay, az, adc_value[4]);
+        sendMessage(ax, ay, az, ck);
     }
 
-    Disbuff.fillRect(0, 30, 80, 130, BLACK);
-    Disbuff.setCursor(10, 30);
-    Disbuff.printf("%04d", SendBuff[3]);
-    Disbuff.setCursor(10, 45);
-    Disbuff.printf("%04d", SendBuff[4]);
-    Disbuff.setCursor(10, 60);
-    Disbuff.printf("%04d", SendBuff[5]);
-
-    Disbuff.setCursor(10, 100);
-    Disbuff.printf("%04X", adc_value[4]);
-    Disbuff.pushSprite(0, 0);
+    
 }
