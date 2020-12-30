@@ -256,6 +256,7 @@ void loop() {
         AngleBuff[i] = I2CRead16bit(0x50 + i * 2);
     }
 
+    delay(10);
 
     if (WiFi.status() != WL_CONNECTED) {
         Disbuff.pushImage(0, 0, 20, 20, (uint16_t *)connect_off);

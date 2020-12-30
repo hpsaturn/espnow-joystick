@@ -3,10 +3,9 @@
 #include <analogWrite.h>
 #include <pb_decode.h>
 #include <pb_encode.h>
+#include <ESP32MotorControl.h>
 #include "simple.pb.h"
 
-int16_t speed_buff[4] = {0};
-int8_t speed_sendbuff[4] = {0};
 uint32_t count = 0;
 uint8_t IIC_ReState = I2C_ERROR_NO_BEGIN;
 
@@ -17,6 +16,16 @@ WiFiServer server(80);
 WiFiUDP udp;
 uint8_t buffer[128];
 SimpleMessage message = SimpleMessage_init_zero;
+
+#define LEFT_MOTOR   0
+#define RIGHT_MOTOR  1
+
+#define MIN1  27
+#define MIN2  25
+#define MIN3  22
+#define MIN4  21
+
+ESP32MotorControl mc = ESP32MotorControl();
 
 bool decodeMessage(uint16_t message_length) {
     /* This is the buffer where we will store our message. */
@@ -37,28 +46,58 @@ bool decodeMessage(uint16_t message_length) {
 }
 
 void setSpeed(int16_t Vtx, int16_t Vty, int16_t Wt) {
-    // Serial.printf("[Vtx:%04d Vty:%04d Wt:%04d ]", Vtx, Vty, Wt);
     Wt = (Wt > 100) ? 100 : Wt;
     Wt = (Wt < -100) ? -100 : Wt;
 
     Vtx = (Vtx > 100) ? 100 : Vtx;
     Vtx = (Vtx < -100) ? -100 : Vtx;
+
     Vty = (Vty > 100) ? 100 : Vty;
     Vty = (Vty < -100) ? -100 : Vty;
 
-    Vtx = (Wt != 0) ? Vtx * (100 - abs(Wt)) / 100 : Vtx;
-    Vty = (Wt != 0) ? Vty * (100 - abs(Wt)) / 100 : Vty;
+    // Vtx = (Wt != 0) ? Vtx * (100 - abs(Wt)) / 100 : Vtx;
+    // Vty = (Wt != 0) ? Vty * (100 - abs(Wt)) / 100 : Vty;
 
-    speed_buff[0] = Vty - Vtx - Wt;
-    speed_buff[1] = Vty + Vtx + Wt;
-    speed_buff[3] = Vty - Vtx + Wt;
-    speed_buff[2] = Vty + Vtx - Wt;
+    // Serial.printf("[Vtx:%04d Vty:%04d Wt:%04d ]\n", Vtx, Vty, Wt);
+    
+    int speed = map(abs(Vty), 0, 100, 0, 255);
+    int dir = (Vtx>0) ? 0 : 1;
 
-    for (int i = 0; i < 4; i++) {
-        speed_buff[i] = (speed_buff[i] > 100) ? 100 : speed_buff[i];
-        speed_buff[i] = (speed_buff[i] < -100) ? -100 : speed_buff[i];
-        speed_sendbuff[i] = speed_buff[i];
+    if (Vty > 0) {
+        if (dir == 0) {  // turn left
+            mc.motorForward(LEFT_MOTOR, speed - Vtx);
+            mc.motorForward(RIGHT_MOTOR, speed);
+        } else {
+            mc.motorForward(LEFT_MOTOR, speed);
+            mc.motorForward(RIGHT_MOTOR, speed + Vtx);
+        }
+
+    } else {
+        if (dir == 0) {  // turn left
+            mc.motorReverse(LEFT_MOTOR, speed - Vtx);
+            mc.motorReverse(RIGHT_MOTOR, speed);
+        } else {
+            mc.motorReverse(LEFT_MOTOR, speed);
+            mc.motorReverse(RIGHT_MOTOR, speed + Vtx);
+        }
     }
+
+    // int ledout = map(message.ay, 0, 192, 0, 255);
+    // Serial.printf("led: %03d] ", ledout);
+    // mc.motorForward(LEFT_MOTOR, ledout);
+    // mc.motorForward(RIGHT_MOTOR, ledout);
+    // analogWrite(19, ledout);
+
+    // speed_buff[0] = Vty - Vtx - Wt;
+    // speed_buff[1] = Vty + Vtx + Wt;
+    // speed_buff[3] = Vty - Vtx + Wt;
+    // speed_buff[2] = Vty + Vtx - Wt;
+
+    // for (int i = 0; i < 4; i++) {
+    //     speed_buff[i] = (speed_buff[i] > 100) ? 100 : speed_buff[i];
+    //     speed_buff[i] = (speed_buff[i] < -100) ? -100 : speed_buff[i];
+    //     speed_sendbuff[i] = speed_buff[i];
+    // }
     // Serial.printf("[b0:%04d b1:%04d b2:%04d b3:%04d]\n", speed_buff[0], speed_buff[1], speed_buff[2], speed_buff[3]);
 }
 
@@ -79,7 +118,12 @@ void setup() {
 
     udp.begin(1003);
 
-    analogWriteResolution(19, 12);
+    analogWriteResolution(19, 12);   // builtin LED for TTGO-T7 v1.3 (see docs directory)
+
+    mc.attachMotors(MIN1,MIN2,MIN3,MIN4);
+    // m1.attachMotor(MIN1,MIN2);
+    // m2.attachMotor(MIN3,MIN4);
+
 }
 
 void loop() {
@@ -96,10 +140,8 @@ void loop() {
             decodeMessage(udplength-4);
             
             if (message.ck == 0x01) {
-                Serial.printf("[%04d %04d %04d] [", message.ax - 100, message.ay - 100, message.az - 100);
-                int ledout = map(message.ay, 0, 192, 0, 255);
-                Serial.printf("led: %03d] \n", ledout);
-                analogWrite(19, ledout);
+                // Serial.printf("[%04d %04d %04d] [", message.ax - 100, message.ay - 100, message.az - 100);
+                // Serial.printf("[%04d %04d %04d] [", message.ax - 100, message.ay - 100, message.az - 100);
                 setSpeed(message.ax - 100, message.ay - 100, message.az - 100);
             } else {
                 setSpeed(0, 0, 0);
