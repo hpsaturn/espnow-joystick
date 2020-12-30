@@ -61,32 +61,33 @@ void setSpeed(int16_t Vtx, int16_t Vty, int16_t Wt) {
     // Serial.printf("[Vtx:%04d Vty:%04d Wt:%04d ]\n", Vtx, Vty, Wt);
     
     int speed = map(abs(Vty), 0, 100, 0, 255);
-    int dir = (Vtx>0) ? 0 : 1;
+
+    int dir = (Vtx>0) ? 0 : 1; // 0 left, 1 right
 
     if (Vty > 0) {
         if (dir == 0) {  // turn left
-            mc.motorForward(LEFT_MOTOR, speed - Vtx);
-            mc.motorForward(RIGHT_MOTOR, speed);
-        } else {
             mc.motorForward(LEFT_MOTOR, speed);
-            mc.motorForward(RIGHT_MOTOR, speed + Vtx);
+            mc.motorForward(RIGHT_MOTOR, speed - Vtx);
+        } else {  // turn right
+            mc.motorForward(LEFT_MOTOR, speed + Vtx);
+            mc.motorForward(RIGHT_MOTOR, speed);
         }
 
     } else {
         if (dir == 0) {  // turn left
-            mc.motorReverse(LEFT_MOTOR, speed - Vtx);
-            mc.motorReverse(RIGHT_MOTOR, speed);
-        } else {
             mc.motorReverse(LEFT_MOTOR, speed);
-            mc.motorReverse(RIGHT_MOTOR, speed + Vtx);
+            mc.motorReverse(RIGHT_MOTOR, speed - Vtx);
+        } else {
+            mc.motorReverse(LEFT_MOTOR, speed + Vtx);
+            mc.motorReverse(RIGHT_MOTOR, speed);
         }
     }
 
-    // int ledout = map(message.ay, 0, 192, 0, 255);
+    analogWrite(19, speed);
+
     // Serial.printf("led: %03d] ", ledout);
     // mc.motorForward(LEFT_MOTOR, ledout);
     // mc.motorForward(RIGHT_MOTOR, ledout);
-    // analogWrite(19, ledout);
 
     // speed_buff[0] = Vty - Vtx - Wt;
     // speed_buff[1] = Vty + Vtx + Wt;
@@ -149,5 +150,8 @@ void loop() {
         } else {
             setSpeed(0, 0, 0);
         }
+    }
+    else {
+        delay(10);
     }
 }
