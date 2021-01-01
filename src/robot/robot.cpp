@@ -1,5 +1,6 @@
 #include <WiFi.h>
 #include <WiFiUdp.h>
+#include <OTAHandler.h>
 #include <analogWrite.h>
 #include <pb_decode.h>
 #include <pb_encode.h>
@@ -115,6 +116,17 @@ void setSpeed(int16_t Vtx, int16_t Vty, int16_t Wt) {
     // Serial.printf("[b0:%04d b1:%04d b2:%04d b3:%04d]\n", speed_buff[0], speed_buff[1], speed_buff[2], speed_buff[3]);
 }
 
+void otaLoop() {
+    if (WiFi.isConnected()) {
+        ota.loop();
+    }
+}
+
+void otaInit() {
+    ota.setup("AIROBOT", "AIROBOT");
+    // ota.setCallbacks(new MyOTAHandlerCallbacks());
+}
+
 void setup() {
     Serial.begin(115200);
     uint64_t chipid = ESP.getEfuseMac();
@@ -129,6 +141,8 @@ void setup() {
     Serial.print("AP IP address: ");
     Serial.println(myIP);
     server.begin();
+
+    otaInit();
 
     udp.begin(1003);
 
@@ -164,4 +178,5 @@ void loop() {
     else {
         delay(10);
     }
+    ota.loop();
 }

@@ -43,19 +43,15 @@ uint8_t buffer[128];
 size_t message_length;
 bool status;
 
+/**
+ * @brief sendMessage via protobuf (nanopb)
+ * @param ax stick1 x value
+ * @param ay stick1 y value
+ * @param az stick2 x value
+ * @param ck check value
+ */
 bool sendMessage(uint8_t ax, uint8_t ay, uint8_t az, uint8_t ck) {
-    /* This is the buffer where we will store our message. */
     SimpleMessage message = SimpleMessage_init_zero;
-
-    /* Allocate space on the stack to store the message data.
-    *
-    * Nanopb generates simple struct definitions for all the messages.
-    * - check out the contents of simple.pb.h!
-    * It is a good idea to always initialize your structures
-    * so that you do not have garbage data from RAM in there.
-    */
-
-    /* Create a stream that will write to our buffer. */
     pb_ostream_t stream = pb_ostream_from_buffer(buffer, sizeof(buffer));
 
     /* Fill the proto values (joystick angle)*/
@@ -64,17 +60,13 @@ bool sendMessage(uint8_t ax, uint8_t ay, uint8_t az, uint8_t ck) {
     message.az = az;
     message.ck = ck;
 
-    /* Now we are ready to encode the message! */
     status = pb_encode(&stream, SimpleMessage_fields, &message);
     message_length = stream.bytes_written;
-    /* Then just check for any errors.. */
 
     if (!status) {
         printf("Encoding failed: %s\n", PB_GET_ERROR(&stream));
         return false;
     }
-
-    /* Now we are ready to send it */
 
     uint8_t sendBuff[message_length + 4];
 
