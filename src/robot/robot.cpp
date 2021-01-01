@@ -17,8 +17,8 @@ WiFiUDP udp;
 uint8_t buffer[128];
 SimpleMessage message = SimpleMessage_init_zero;
 
-#define LEFT_MOTOR   0
-#define RIGHT_MOTOR  1
+#define MRIGHT 0
+#define MLEFT  1
 
 #define MIN1  27
 #define MIN2  25
@@ -59,7 +59,7 @@ void setSpeed(int16_t Vtx, int16_t Vty, int16_t Wt) {
     // Vty = (Wt != 0) ? Vty * (100 - abs(Wt)) / 100 : Vty;
 
 
-    int speed = map(abs(Vty), 0, 100, 0, 160);
+    int speed = map(abs(Vty), 0, 100, 70, 180);
     int turn = abs(Wt);
     
     Serial.printf("[Vtx:%04d Vty:%04d Wt:%04d ]\n", Vtx, Vty, Wt);
@@ -68,28 +68,28 @@ void setSpeed(int16_t Vtx, int16_t Vty, int16_t Wt) {
 
     if (Vty > 10) {
         if (dir == 0) {  // turn left
-            mc.motorForward(LEFT_MOTOR, speed);
-            mc.motorForward(RIGHT_MOTOR, speed - turn);
+            mc.motorForward(MRIGHT, speed);
+            mc.motorForward(MLEFT, speed - turn);
         } else {  // turn right
-            mc.motorForward(LEFT_MOTOR, speed - turn);
-            mc.motorForward(RIGHT_MOTOR, speed);
+            mc.motorForward(MRIGHT, speed - turn);
+            mc.motorForward(MLEFT, speed);
         }
     } else if (Vty < -10) {
         if (dir == 0) {  // turn left
-            mc.motorReverse(LEFT_MOTOR, speed);
-            mc.motorReverse(RIGHT_MOTOR, speed - turn);
+            mc.motorReverse(MRIGHT, speed);
+            mc.motorReverse(MLEFT, speed - turn);
         } else {
-            mc.motorReverse(LEFT_MOTOR, speed - turn);
-            mc.motorReverse(RIGHT_MOTOR, speed);
+            mc.motorReverse(MRIGHT, speed - turn);
+            mc.motorReverse(MLEFT, speed);
         }
     } 
     else if (Vty < 10 && Vty > -10 && Wt !=0 ) {
         if (dir == 0) {  // turn left
-            mc.motorReverse(RIGHT_MOTOR, turn);
-            mc.motorForward(LEFT_MOTOR, turn);
+            mc.motorReverse(MLEFT, turn*2);
+            mc.motorForward(MRIGHT, turn*2);
         } else {
-            mc.motorForward(RIGHT_MOTOR, turn);
-            mc.motorReverse(LEFT_MOTOR, turn);
+            mc.motorForward(MLEFT, turn*2);
+            mc.motorReverse(MRIGHT, turn*2);
         }
     }
     else {
@@ -99,8 +99,8 @@ void setSpeed(int16_t Vtx, int16_t Vty, int16_t Wt) {
     // analogWrite(19, speed);
 
     // Serial.printf("led: %03d] ", ledout);
-    // mc.motorForward(LEFT_MOTOR, ledout);
-    // mc.motorForward(RIGHT_MOTOR, ledout);
+    // mc.motorForward(MRIGHT, ledout);
+    // mc.motorForward(MLEFT, ledout);
 
     // speed_buff[0] = Vty - Vtx - Wt;
     // speed_buff[1] = Vty + Vtx + Wt;
