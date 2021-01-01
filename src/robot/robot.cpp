@@ -58,32 +58,45 @@ void setSpeed(int16_t Vtx, int16_t Vty, int16_t Wt) {
     // Vtx = (Wt != 0) ? Vtx * (100 - abs(Wt)) / 100 : Vtx;
     // Vty = (Wt != 0) ? Vty * (100 - abs(Wt)) / 100 : Vty;
 
-    // Serial.printf("[Vtx:%04d Vty:%04d Wt:%04d ]\n", Vtx, Vty, Wt);
+
+    int speed = map(abs(Vty), 0, 100, 0, 160);
+    int turn = abs(Wt);
     
-    int speed = map(abs(Vty), 0, 100, 0, 255);
+    Serial.printf("[Vtx:%04d Vty:%04d Wt:%04d ]\n", Vtx, Vty, Wt);
 
-    int dir = (Vtx>0) ? 0 : 1; // 0 left, 1 right
+    int dir = (Wt>0) ? 0 : 1; // 0 left, 1 right
 
-    if (Vty > 0) {
+    if (Vty > 10) {
         if (dir == 0) {  // turn left
             mc.motorForward(LEFT_MOTOR, speed);
-            mc.motorForward(RIGHT_MOTOR, speed - Vtx);
+            mc.motorForward(RIGHT_MOTOR, speed - turn);
         } else {  // turn right
-            mc.motorForward(LEFT_MOTOR, speed + Vtx);
+            mc.motorForward(LEFT_MOTOR, speed - turn);
             mc.motorForward(RIGHT_MOTOR, speed);
         }
-
-    } else {
+    } else if (Vty < -10) {
         if (dir == 0) {  // turn left
             mc.motorReverse(LEFT_MOTOR, speed);
-            mc.motorReverse(RIGHT_MOTOR, speed - Vtx);
+            mc.motorReverse(RIGHT_MOTOR, speed - turn);
         } else {
-            mc.motorReverse(LEFT_MOTOR, speed + Vtx);
+            mc.motorReverse(LEFT_MOTOR, speed - turn);
             mc.motorReverse(RIGHT_MOTOR, speed);
         }
+    } 
+    else if (Vty < 10 && Vty > -10 && Wt !=0 ) {
+        if (dir == 0) {  // turn left
+            mc.motorReverse(RIGHT_MOTOR, turn);
+            mc.motorForward(LEFT_MOTOR, turn);
+        } else {
+            mc.motorForward(RIGHT_MOTOR, turn);
+            mc.motorReverse(LEFT_MOTOR, turn);
+        }
+    }
+    else {
+        mc.motorsStop();
     }
 
-    analogWrite(19, speed);
+    // analogWrite(19, speed);
 
     // Serial.printf("led: %03d] ", ledout);
     // mc.motorForward(LEFT_MOTOR, ledout);
@@ -122,9 +135,6 @@ void setup() {
     analogWriteResolution(19, 12);   // builtin LED for TTGO-T7 v1.3 (see docs directory)
 
     mc.attachMotors(MIN1,MIN2,MIN3,MIN4);
-    // m1.attachMotor(MIN1,MIN2);
-    // m2.attachMotor(MIN3,MIN4);
-
 }
 
 void loop() {
