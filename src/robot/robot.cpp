@@ -5,7 +5,7 @@
 #include <pb_decode.h>
 #include <pb_encode.h>
 #include <ESP32MotorControl.h>
-#include "simple.pb.h"
+#include "comm.pb.h"
 
 uint32_t count = 0;
 uint8_t IIC_ReState = I2C_ERROR_NO_BEGIN;
@@ -16,7 +16,7 @@ const char *password = "77777777";
 WiFiServer server(80);
 WiFiUDP udp;
 uint8_t buffer[128];
-SimpleMessage message = SimpleMessage_init_zero;
+JoystickMessage jm = JoystickMessage_init_zero;
 
 #define MRIGHT 0
 #define MLEFT  1
@@ -35,7 +35,7 @@ bool decodeMessage(uint16_t message_length) {
     pb_istream_t stream = pb_istream_from_buffer(buffer, message_length);
 
     /* Now we are ready to decode the message. */
-    bool status = pb_decode(&stream, SimpleMessage_fields, &message);
+    bool status = pb_decode(&stream, JoystickMessage_fields, &jm);
 
     /* Check for errors... */
     if (!status) {
@@ -145,13 +145,9 @@ void loop() {
             for (int i = 0; i < udplength-4; i++) {
                 buffer[i] = udodata[i+3];
             }
-            
             decodeMessage(udplength-4);
-            
-            if (message.ck == 0x01) {
-                // Serial.printf("[%04d %04d %04d] [", message.ax - 100, message.ay - 100, message.az - 100);
-                // Serial.printf("[%04d %04d %04d] [", message.ax - 100, message.ay - 100, message.az - 100);
-                setSpeed(message.ax - 100, message.ay - 100, message.az - 100);
+            if (jm.ck == 0x01) {
+                setSpeed(jm.ax - 100, jm.ay - 100, jm.az - 100);
             } else {
                 setSpeed(0, 0, 0);
             }

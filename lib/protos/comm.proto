@@ -1,0 +1,12 @@
+// A very simple protocol definition, consisting of only
+// one message for handling the joystick data
+
+syntax = "proto2";
+
+message JoystickMessage {
+    required uint32 ax = 1;   // left stick x position
+    required uint32 ay = 2;   // left stick y position
+    required uint32 az = 3;   // right stick x position
+    required uint32 ck = 4;   // check data
+}
+

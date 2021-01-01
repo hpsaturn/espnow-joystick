@@ -5,10 +5,7 @@
 #include <pb_decode.h>
 #include <pb_encode.h>
 
-#include "EEPROM.h"
-#include "simple.pb.h"
-
-#define EEPROM_SIZE 64
+#include "comm.pb.h"
 
 TFT_eSprite Disbuff = TFT_eSprite(&M5.Lcd);
 extern const unsigned char connect_on[800];
@@ -55,16 +52,16 @@ bool status;
  * @param ck check value
  */
 bool sendMessage(uint8_t ax, uint8_t ay, uint8_t az, uint8_t ck) {
-    SimpleMessage message = SimpleMessage_init_zero;
+    JoystickMessage jm = JoystickMessage_init_zero;
     pb_ostream_t stream = pb_ostream_from_buffer(buffer, sizeof(buffer));
 
     /* Fill the proto values (joystick angle)*/
-    message.ax = ax;
-    message.ay = ay;
-    message.az = az;
-    message.ck = ck;
+    jm.ax = ax;
+    jm.ay = ay;
+    jm.az = az;
+    jm.ck = ck;
 
-    status = pb_encode(&stream, SimpleMessage_fields, &message);
+    status = pb_encode(&stream, JoystickMessage_fields, &jm);
     message_length = stream.bytes_written;
 
     if (!status) {
