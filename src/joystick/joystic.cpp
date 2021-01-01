@@ -182,7 +182,7 @@ void setup() {
                     Serial.printf("count_bn_a %d \n", count_bn_a);
                 } else if ((M5.BtnA.isReleased()) && (count_bn_a != 0)) {
                     Serial.printf("count_bn_a %d", count_bn_a);
-                    if (count_bn_a > 200) {
+                    if (count_bn_a > 100) {
                     } else {
                         choose++;
                         if (choose >= count) {
@@ -227,6 +227,7 @@ void setup() {
 
     Disbuff.pushImage(0, 0, 20, 20, (uint16_t *)connect_on);
     Disbuff.pushSprite(0, 0);
+    count=0;
 }
 
 void drawValues(uint8_t ax, uint8_t ay, uint8_t az) {
@@ -237,9 +238,18 @@ void drawValues(uint8_t ax, uint8_t ay, uint8_t az) {
     Disbuff.printf("AY: %04d", ay);
     Disbuff.setCursor(10, 60);
     Disbuff.printf("AZ: %04d", az);
+    Disbuff.setCursor(10, 85);
+    Disbuff.printf("V: %.2fv", M5.Axp.GetBatVoltage());
+    Disbuff.setCursor(10, 95);
+    Disbuff.printf("I: %.1fma", M5.Axp.GetBatCurrent());
 }
 
 void loop() {
+
+    if (M5.BtnA.read() == 1) {
+        if (count++ > 10) M5.Axp.PowerOff();
+    }
+
     for (int i = 0; i < 4; i++) {
         AngleBuff[i] = I2CRead16bit(0x50 + i * 2);
     }
@@ -271,4 +281,6 @@ void loop() {
         drawValues(ax, ay, az);
         sendMessage(ax, ay, az, ck);
     }
+
+    M5.update();
 }
