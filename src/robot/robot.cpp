@@ -98,22 +98,6 @@ void setSpeed(int16_t Vtx, int16_t Vty, int16_t Wt) {
     }
 
     // analogWrite(19, speed);
-
-    // Serial.printf("led: %03d] ", ledout);
-    // mc.motorForward(MRIGHT, ledout);
-    // mc.motorForward(MLEFT, ledout);
-
-    // speed_buff[0] = Vty - Vtx - Wt;
-    // speed_buff[1] = Vty + Vtx + Wt;
-    // speed_buff[3] = Vty - Vtx + Wt;
-    // speed_buff[2] = Vty + Vtx - Wt;
-
-    // for (int i = 0; i < 4; i++) {
-    //     speed_buff[i] = (speed_buff[i] > 100) ? 100 : speed_buff[i];
-    //     speed_buff[i] = (speed_buff[i] < -100) ? -100 : speed_buff[i];
-    //     speed_sendbuff[i] = speed_buff[i];
-    // }
-    // Serial.printf("[b0:%04d b1:%04d b2:%04d b3:%04d]\n", speed_buff[0], speed_buff[1], speed_buff[2], speed_buff[3]);
 }
 
 void otaLoop() {

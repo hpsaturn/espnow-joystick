@@ -1,6 +1,7 @@
 #include <M5StickC.h>
 #include <WiFi.h>
 #include <WiFiUdp.h>
+#include <ConfigApp.hpp>
 #include <pb_decode.h>
 #include <pb_encode.h>
 
@@ -27,6 +28,9 @@ IPAddress secondaryDNS(8, 8, 4, 4);  //optional
 
 const char *ssid = "ROBOTAP";
 const char *password = "77777777";
+
+String PREF_LAST_DEVICE = "pldevice";
+String lastDevice = "";
 
 WiFiUDP udp;
 
@@ -114,7 +118,7 @@ uint16_t I2CRead16bit(uint8_t Addr) {
 void setup() {
     M5.begin();
     Wire.begin(0, 26, 10000);
-    EEPROM.begin(EEPROM_SIZE);
+    cfg.init();
 
     M5.Lcd.setRotation(4);
     M5.Lcd.setSwapBytes(false);
@@ -135,13 +139,15 @@ void setup() {
 
     M5.update();
 
-    if ((EEPROM.read(0) != 0x56) || (M5.BtnA.read() == 1)) {
+    lastDevice = cfg.loadString(PREF_LAST_DEVICE);
+
+    Disbuff.setTextSize(1);
+    Disbuff.setTextColor(GREEN);
+    Disbuff.fillRect(0, 0, 80, 20, Disbuff.color565(50, 50, 50));
+
+    if ((lastDevice.length() == 0) || (M5.BtnA.read() == 1)) {
         WiFi.mode(WIFI_STA);
         int n = WiFi.scanNetworks();
-        Disbuff.setTextSize(1);
-        Disbuff.setTextColor(GREEN);
-        Disbuff.fillRect(0, 0, 80, 20, Disbuff.color565(50, 50, 50));
-
         if (n == 0) {
             Disbuff.setCursor(5, 20);
             Disbuff.printf("no networks");
@@ -165,10 +171,10 @@ void setup() {
             Disbuff.pushSprite(0, 0);
             while (1) {
                 if (M5.BtnA.read() == 1) {
-                    if (count_bn_a >= 200) {
-                        count_bn_a = 201;
-                        EEPROM.writeUChar(0, 0x56);
-                        EEPROM.writeString(1, WfifAPBuff[choose]);
+                    if (count_bn_a >= 100) {
+                        count_bn_a = 101;
+                        cfg.saveString(PREF_LAST_DEVICE, WfifAPBuff[choose]);
+                        Serial.printf("saved device: %s\n", WfifAPBuff[choose].c_str());
                         ssidname = WfifAPBuff[choose];
                         break;
                     }
@@ -199,11 +205,9 @@ void setup() {
                 delay(10);
                 M5.update();
             }
-            //EEPROM.writeString(1,WfifAPBuff[0]);
         }
-    } else if (EEPROM.read(0) == 0x56) {
-        ssidname = EEPROM.readString(1);
-        EEPROM.readString(1, APName, 16);
+    } else if (lastDevice.length() > 0) {
+        ssidname = lastDevice;
     }
 
     Disbuff.fillRect(0, 20, 80, 140, BLACK);
