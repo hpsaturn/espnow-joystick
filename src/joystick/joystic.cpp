@@ -233,25 +233,17 @@ void setup() {
     Disbuff.pushSprite(0, 0);
 }
 
-void drawValues(uint8_t ax, uint8_t ay, uint8_t az, uint16_t adc) {
+void drawValues(uint8_t ax, uint8_t ay, uint8_t az) {
     Disbuff.fillRect(0, 30, 80, 130, BLACK);
     Disbuff.setCursor(10, 30);
-    Disbuff.printf("%04d", ax);
+    Disbuff.printf("AX: %04d", ax);
     Disbuff.setCursor(10, 45);
-    Disbuff.printf("%04d", ay);
+    Disbuff.printf("AY: %04d", ay);
     Disbuff.setCursor(10, 60);
-    Disbuff.printf("%04d", az);
-
-    Disbuff.setCursor(10, 100);
-    Disbuff.printf("%04X", adc);
-    Disbuff.pushSprite(0, 0);
+    Disbuff.printf("AZ: %04d", az);
 }
 
 void loop() {
-    for (int i = 0; i < 5; i++) {
-        adc_value[i] = I2CRead8bit(0x60 + i);
-    }
-
     for (int i = 0; i < 4; i++) {
         AngleBuff[i] = I2CRead16bit(0x50 + i * 2);
     }
@@ -261,13 +253,15 @@ void loop() {
     if (WiFi.status() != WL_CONNECTED) {
         Disbuff.pushImage(0, 0, 20, 20, (uint16_t *)connect_off);
         Disbuff.pushSprite(0, 0);
-
         if (count++ > 1000) {
             WiFi.config(local_IP, gateway, subnet, primaryDNS, secondaryDNS);
             count = 0;
         }
 
     } else {
+        Disbuff.pushImage(0, 0, 20, 20, (uint16_t *)connect_on);
+        Disbuff.pushSprite(0, 0);
+
         uint8_t ax = map(AngleBuff[0], 0, 4000, 0, 200);
         uint8_t ay = map(AngleBuff[1], 0, 4000, 0, 200);
         uint8_t az = map(AngleBuff[2], 0, 4000, 0, 200);
@@ -278,7 +272,7 @@ void loop() {
             (az > 110) || (az < 90)) {
             ck = 0x01;
         }
-        drawValues(ax, ay, az, adc_value[4]);
+        drawValues(ax, ay, az);
         sendMessage(ax, ay, az, ck);
     }
 }
