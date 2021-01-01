@@ -26,6 +26,10 @@ Please check the right USB ports on `platformio.ini` file.
 
 After the first upload, you could comment the robot and joystick blocks in platformio.ini and uncomment the OTA blocks for upload via WiFi without USB.
 
+## Usage
+
+Turn on the robot, then the joystick, when the joystick detect the robot, push the M5 button for some seconds for pair. For turn off the joystick press again the M5 button.
+
 ## DIY Robot
 
 For the instructions and more details [here](https://www.thingiverse.com/thing:4705776).
