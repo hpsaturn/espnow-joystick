@@ -1,6 +1,7 @@
 #include <M5StickC.h>
 #include <WiFi.h>
 #include <WiFiUdp.h>
+#include <OTAHandler.h>
 #include <ConfigApp.hpp>
 #include <pb_decode.h>
 #include <pb_encode.h>
@@ -112,6 +113,17 @@ uint16_t I2CRead16bit(uint8_t Addr) {
     return ReData;
 }
 
+void otaLoop() {
+    if (WiFi.isConnected()) {
+        ota.loop();
+    }
+}
+
+void otaInit() {
+    ota.setup("AIROBOTJC", "AIROBOT");
+    // ota.setCallbacks(new MyOTAHandlerCallbacks());
+}
+
 void setup() {
     M5.begin();
     Wire.begin(0, 26, 10000);
@@ -220,6 +232,7 @@ void setup() {
         Serial.print(".");
     }
 
+    otaInit();
     udp.begin(2000);
 
     Disbuff.pushImage(0, 0, 20, 20, (uint16_t *)connect_on);
@@ -251,7 +264,6 @@ void loop() {
         AngleBuff[i] = I2CRead16bit(0x50 + i * 2);
     }
 
-    delay(10);
 
     if (WiFi.status() != WL_CONNECTED) {
         Disbuff.pushImage(0, 0, 20, 20, (uint16_t *)connect_off);
@@ -277,7 +289,8 @@ void loop() {
         }
         drawValues(ax, ay, az);
         sendMessage(ax, ay, az, ck);
+        delay(10);
     }
-
+    otaLoop();
     M5.update();
 }
