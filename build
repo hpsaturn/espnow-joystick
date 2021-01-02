@@ -1,0 +1,158 @@
+#!/bin/bash
+
+export `cat platformio.ini | grep SRC_REV | awk '{print $2}'`
+DATE=`date +%Y%m%d`
+OUTDIR=".pio/build"
+RELDIR="releases"
+BINDIR="binaries"
+DEFAULT="robot"
+INSDIR=$RELDIR/installer/airobot_installer
+
+showHelp () {
+  echo ""
+  echo "************************************************"
+  echo "** Build release flavor or installer package **"
+  echo "************************************************"
+  echo ""
+  echo "Usage: ./build [board|all|installer|help|print]"
+  echo ""
+  echo "example: ./build all"
+  echo "example: ./build robot"
+  echo "example: ./build joystick"
+  echo ""
+  echo "Build installer option will make a installer package for Linux"
+  echo "with OTA support and USB support"
+  echo ""
+}
+
+updateInstallerBinaries () {
+  echo ""
+  echo "***********************************************"
+  echo "** Update installer binaries.."
+  echo "***********************************************"
+  echo ""
+  cp $OUTDIR/$DEFAULT/partitions.bin $INSDIR/system/
+  cp ~/.platformio/packages/framework-arduinoespressif32/tools/partitions/boot_app0.bin $INSDIR/system/
+  cp ~/.platformio/packages/framework-arduinoespressif32/tools/sdk/bin/bootloader_dio_40m.bin $INSDIR/system/
+  cp ~/.platformio/packages/tool-esptoolpy/esptool.py $INSDIR/system/
+  cp ~/.platformio/packages/framework-arduinoespressif32/tools/espota.py $INSDIR/system/
+  chmod 755 $INSDIR/install.sh
+}
+
+updateFlavorBinaries() {
+  rm -f $INSDIR/*.bin
+  rm -f $INSDIR/*.py   # old installer
+  cp $RELDIR/$BINDIR/*/*${DATE}.bin $INSDIR/
+}
+
+clean () {
+  rm -r $RELDIR/$BINDIR
+}
+
+build () {
+  pio run -s -e $1 -t clean
+
+  echo ""
+  echo "***********************************************"
+  echo "** Building $1"
+  echo "***********************************************"
+  echo ""
+
+  pio run -s -e $1
+
+  echo ""
+  echo "***********************************************"
+  echo "** Firmware $1 output:"
+  echo -n "** MD5:"
+  FIRMDIR=$RELDIR/$BINDIR/$1
+  mkdir -p $FIRMDIR 
+  cp $OUTDIR/$1/firmware.bin $FIRMDIR/airobot_${1}_rev${SRC_REV}_${DATE}.bin
+  md5sum $FIRMDIR/airobot_${1}_rev${SRC_REV}_${DATE}.bin
+  echo "***********************************************"
+  echo ""
+}
+
+buildInstaller () {
+  echo ""
+  mkdir -p $INSDIR/system
+  updateInstallerBinaries
+  updateFlavorBinaries
+  printOutput
+  cd $INSDIR/..
+  rm -f airobot_rev${SRC_REV}_${DATE}.zip
+  zip -r airobot_rev${SRC_REV}_${DATE}.zip airobot_installer
+  echo ""
+  du -hs airobot_rev${SRC_REV}_${DATE}.zip
+  echo ""
+}
+
+publish_release () {
+  cd $INSDIR/..
+  COMMIT_LOG=`git log -1 --format='%ci %H %s'`
+  github-release upload --owner hpsaturn --repo airobot --tag "rev${SRC_REV}" --release-name "rev${SRC_REV}" --body "${COMMIT_LOG}" airobot_rev${SRC_REV}_${DATE}.zip
+}
+
+printOutput () {
+  echo ""
+  mkdir -p $INSDIR
+  FIRMDIR=$RELDIR/$BINDIR
+  rm -f $INSDIR/md5output.txt
+  touch $INSDIR/md5output.txt
+  cd $FIRMDIR
+  for flavor in *; do
+    MD5FLAVOR=`md5sum $flavor/airobot_${flavor}_rev${SRC_REV}_${DATE}.bin`
+    echo $MD5FLAVOR >> ../../$INSDIR/md5output.txt
+  done
+  cat ../../$INSDIR/md5output.txt
+  cd ../..
+  echo "" 
+}
+
+
+if [ "$1" = "" ]; then
+  showHelp
+else
+  case "$1" in
+    clean)
+      clean
+      ;;
+
+    installer)
+      buildInstaller
+      ;;
+
+    help)
+      showHelp
+      ;;
+
+    --help)
+      showHelp
+      ;;
+
+    -help)
+      showHelp
+      ;;
+
+    print)
+      printOutput
+      ;;
+
+    all)
+      clean
+      build robot
+      build joystick
+      printOutput
+      ;;
+
+    publish)
+      publish_release
+      ;;
+
+    *)
+      build $1
+      ;;
+  esac
+fi
+
+exit 0
+
