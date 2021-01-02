@@ -7,6 +7,8 @@
 #include <ESP32MotorControl.h>
 #include "comm.pb.h"
 
+#define BUILTINLED  19
+
 uint32_t count = 0;
 uint8_t IIC_ReState = I2C_ERROR_NO_BEGIN;
 
@@ -42,7 +44,6 @@ bool decodeMessage(uint16_t message_length) {
         printf("Decoding failed: %s\n", PB_GET_ERROR(&stream));
         return false;
     }
-
     return true;
 }
 
@@ -56,11 +57,7 @@ void setSpeed(int16_t Vtx, int16_t Vty, int16_t Wt) {
     Vty = (Vty > 100) ? 100 : Vty;
     Vty = (Vty < -100) ? -100 : Vty;
 
-    // Vtx = (Wt != 0) ? Vtx * (100 - abs(Wt)) / 100 : Vtx;
-    // Vty = (Wt != 0) ? Vty * (100 - abs(Wt)) / 100 : Vty;
-
-
-    int speed = map(abs(Vty), 0, 100, 70, 180);
+    int speed = map(abs(Vty), 0, 100, 60, 200);
     int turn = abs(Wt);
     
     Serial.printf("[Vtx:%04d Vty:%04d Wt:%04d ]\n", Vtx, Vty, Wt);
@@ -75,6 +72,8 @@ void setSpeed(int16_t Vtx, int16_t Vty, int16_t Wt) {
             mc.motorForward(MRIGHT, speed - turn);
             mc.motorForward(MLEFT, speed);
         }
+        analogWrite(BUILTINLED, abs(Vty));
+
     } else if (Vty < -10) {
         if (dir == 0) {  // turn left
             mc.motorReverse(MRIGHT, speed);
@@ -83,21 +82,23 @@ void setSpeed(int16_t Vtx, int16_t Vty, int16_t Wt) {
             mc.motorReverse(MRIGHT, speed - turn);
             mc.motorReverse(MLEFT, speed);
         }
+        analogWrite(BUILTINLED, abs(Vty));
     } 
     else if (Vty < 10 && Vty > -10 && Wt !=0 ) {
         if (dir == 0) {  // turn left
-            mc.motorReverse(MLEFT, turn*2);
-            mc.motorForward(MRIGHT, turn*2);
+            mc.motorReverse(MLEFT, turn*2.4);
+            mc.motorForward(MRIGHT, turn*2.4);
         } else {
-            mc.motorForward(MLEFT, turn*2);
-            mc.motorReverse(MRIGHT, turn*2);
+            mc.motorForward(MLEFT, turn*2.4);
+            mc.motorReverse(MRIGHT, turn*2.4);
         }
+        analogWrite(BUILTINLED, turn);
     }
     else {
         mc.motorsStop();
+        analogWrite(BUILTINLED, 0);
     }
 
-    // analogWrite(19, speed);
 }
 
 void otaLoop() {
@@ -130,7 +131,7 @@ void setup() {
 
     udp.begin(1003);
 
-    analogWriteResolution(19, 12);   // builtin LED for TTGO-T7 v1.3 (see docs directory)
+    analogWriteResolution(BUILTINLED, 12);   // builtin LED for TTGO-T7 v1.3 (see docs directory)
 
     mc.attachMotors(MIN1,MIN2,MIN3,MIN4);
 }
