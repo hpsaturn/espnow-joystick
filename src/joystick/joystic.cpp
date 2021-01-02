@@ -133,13 +133,7 @@ void setup() {
     M5.Lcd.setSwapBytes(false);
     Disbuff.createSprite(80, 160);
     Disbuff.setSwapBytes(true);
-
     Disbuff.fillRect(0, 0, 80, 20, Disbuff.color565(50, 50, 50));
-    Disbuff.setTextSize(2);
-    Disbuff.setTextColor(GREEN);
-    Disbuff.setCursor(55, 6);
-    //Disbuff.printf("%03d",SYSNUM);
-
     Disbuff.pushImage(0, 0, 20, 20, (uint16_t *)connect_off);
     Disbuff.pushSprite(0, 0);
 
@@ -151,7 +145,7 @@ void setup() {
     lastDevice = cfg.loadString(PREF_LAST_DEVICE);
 
     Disbuff.setTextSize(1);
-    Disbuff.setTextColor(GREEN);
+    Disbuff.setTextColor(WHITE);
     Disbuff.fillRect(0, 0, 80, 20, Disbuff.color565(50, 50, 50));
 
     if ((lastDevice.length() == 0) || (M5.BtnA.read() == 1)) {
@@ -237,6 +231,7 @@ void setup() {
 
     Disbuff.pushImage(0, 0, 20, 20, (uint16_t *)connect_on);
     Disbuff.pushSprite(0, 0);
+    Disbuff.setTextColor(WHITE);
     count=0;
 }
 
@@ -263,7 +258,6 @@ void loop() {
     for (int i = 0; i < 4; i++) {
         AngleBuff[i] = I2CRead16bit(0x50 + i * 2);
     }
-
 
     if (WiFi.status() != WL_CONNECTED) {
         Disbuff.pushImage(0, 0, 20, 20, (uint16_t *)connect_off);
