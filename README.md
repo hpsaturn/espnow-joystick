@@ -33,3 +33,5 @@ Turn on the robot, then the joystick, when the joystick detect the robot, push t
 ## DIY Robot
 
 For the instructions and more details [here](https://www.thingiverse.com/thing:4705776).
+
+[![Youtube demo](http://img.youtube.com/vi/GmQLIsL-Mts/0.jpg)](http://www.youtube.com/watch?v=GmQLIsL-Mts "Joystick WiFi using nanopb (protobuff) over a ESP32 caterpillar")
