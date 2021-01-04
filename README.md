@@ -1,6 +1,6 @@
 # AIRobot
 
-ESP32 robot platform, the idea is join it with a [MaxiPy RISC-V](https://maixpy.sipeed.com/en/) camera. For now the current development works with a M5StickC Joystick hat that controlling the robot via UDP using protobuf (nanopb). In the robot it use a simple ESP32 board.
+ESP32 robot platform, the idea is join it with a [MaixPy RISC-V](https://maixpy.sipeed.com/en/) camera. For now the current development works with a M5StickC Joystick hat that controlling the robot via UDP using protobuf (nanopb). In the robot it use a simple ESP32 board.
 
 ## TODO
 
