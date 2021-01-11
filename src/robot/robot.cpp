@@ -20,8 +20,8 @@ WiFiUDP udp;
 uint8_t buffer[128];
 JoystickMessage jm = JoystickMessage_init_zero;
 
-#define MRIGHT 0
-#define MLEFT  1
+#define MRIGHT 1
+#define MLEFT  0
 
 #define MIN1  27
 #define MIN2  25
@@ -58,7 +58,7 @@ void setSpeed(int16_t Vtx, int16_t Vty, int16_t Wt) {
     Vty = (Vty < -100) ? -100 : Vty;
 
     int speed = map(abs(Vty), 0, 100, 60, 200);
-    int turn = abs(Wt);
+    int turn = map(abs(Wt), 0, 100, 0, 130);
     
     Serial.printf("[Vtx:%04d Vty:%04d Wt:%04d ]\n", Vtx, Vty, Wt);
 
@@ -85,12 +85,13 @@ void setSpeed(int16_t Vtx, int16_t Vty, int16_t Wt) {
         analogWrite(BUILTINLED, abs(Vty));
     } 
     else if (Vty < 10 && Vty > -10 && Wt !=0 ) {
+        speed=turn+60;
         if (dir == 0) {  // turn left
-            mc.motorReverse(MLEFT, turn*2.4);
-            mc.motorForward(MRIGHT, turn*2.4);
+            mc.motorReverse(MLEFT, speed);
+            mc.motorForward(MRIGHT, speed);
         } else {
-            mc.motorForward(MLEFT, turn*2.4);
-            mc.motorReverse(MRIGHT, turn*2.4);
+            mc.motorForward(MLEFT, speed);
+            mc.motorReverse(MRIGHT, speed);
         }
         analogWrite(BUILTINLED, turn);
     }
@@ -126,6 +127,7 @@ void setup() {
     Serial.print("AP IP address: ");
     Serial.println(myIP);
     server.begin();
+
 
     otaInit();
 

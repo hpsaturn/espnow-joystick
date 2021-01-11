@@ -16,7 +16,7 @@ ESP32 robot platform, the idea is join it with a [MaxiPy RISC-V](https://maixpy.
 
 ## Firmware
 
-You can build it with Arduino IDE renaming the main files to .ino, but it is more easy if you use PlatformIO, with a simple command you upload both, Joystick and Robot.
+You can build it with Arduino IDE renaming the main files to .ino, but it is more easy if you use PlatformIO, with a simple command you upload both, Joystick and Robot. Connect first the robot board and then the joystick to the USB of your computer and run:
 
 ```bash
 pio run --target upload
@@ -24,11 +24,13 @@ pio run --target upload
 
 Please check the right USB ports on `platformio.ini` file.
 
-After the first upload, you could comment the robot and joystick blocks in platformio.ini and uncomment the OTA blocks for upload via WiFi without USB.
+### OTA (WiFi update)
+
+After the first upload to both boards, you could comment the robot and joystick `default_envs` definition in platformio.ini and uncomment the OTA defaults line for upload via WiFi without USB. Also with VisualCode IDE, you can choose these default envs in the botom tool bar.
 
 ## Usage
 
-Turn on the robot, then the joystick, when the joystick detect the robot, push the M5 button for some seconds for pair. For turn off the joystick press again the M5 button.
+Turn on the robot, then the joystick, when the joystick detect the robot, push the M5 button for some seconds for pair, after that it should show the sticks values and controlling the robot. For turn off the joystick press again the M5 button.
 
 ## DIY Robot
 
