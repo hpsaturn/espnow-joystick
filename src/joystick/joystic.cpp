@@ -220,6 +220,18 @@ void drawValues(uint8_t ax, uint8_t ay, uint8_t az) {
     Disbuff.printf("I: %.1fma", M5.Axp.GetBatCurrent());
 }
 
+
+void updateDisplay(uint8_t ax, uint8_t ay, uint8_t az) {
+    static uint_least32_t guiTimeStamp = 0;
+    if (millis() - guiTimeStamp > 80) {
+        guiTimeStamp = millis();
+        Disbuff.pushImage(0, 0, 20, 20, (uint16_t *)connect_on);
+        Disbuff.pushSprite(0, 0);
+        drawValues(ax, ay, az);
+        M5.update();
+    }
+}
+
 void loop() {
     if (M5.BtnA.read() == 1) {
         if (count++ > 10) M5.Axp.PowerOff();
@@ -228,9 +240,6 @@ void loop() {
     for (int i = 0; i < 4; i++) {
         AngleBuff[i] = I2CRead16bit(0x50 + i * 2);
     }
-
-    Disbuff.pushImage(0, 0, 20, 20, (uint16_t *)connect_on);
-    Disbuff.pushSprite(0, 0);
 
     uint8_t ax = map(AngleBuff[0], 0, 4000, 0, 200);
     uint8_t ay = map(AngleBuff[1], 0, 4000, 0, 200);
@@ -241,12 +250,7 @@ void loop() {
         (ay > 110) || (ay < 90) ||
         (az > 110) || (az < 90)) {
         ck = 0x01;
-    }
-
-    drawValues(ax, ay, az);
+    } 
     sendMessage(ax, ay, az, ck);
-
-    M5.update();
-
-    delay(10);
+    updateDisplay(ax, ay, az);
 }

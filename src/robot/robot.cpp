@@ -23,6 +23,7 @@ JoystickMessage jm = JoystickMessage_init_zero;
 #define MIN4  21
 
 ESP32MotorControl mc = ESP32MotorControl();
+static uint_least64_t debugCount = 0;
 
 void setSpeed(int16_t Vtx, int16_t Vty, int16_t Wt) {
     Wt = (Wt > 100) ? 100 : Wt;
@@ -37,7 +38,8 @@ void setSpeed(int16_t Vtx, int16_t Vty, int16_t Wt) {
     int speed = map(abs(Vty), 0, 100, 60, 200);
     int turn = map(abs(Wt), 0, 100, 0, 130);
     
-    Serial.printf("[Vtx:%04d Vty:%04d Wt:%04d ]\n", Vtx, Vty, Wt);
+    // Serial.printf("[Vtx:%04d Vty:%04d Wt:%04d ]\n", Vtx, Vty, Wt);
+    Serial.println(debugCount++);
 
     int dir = (Wt>0) ? 0 : 1; // 0 left, 1 right
 
@@ -70,7 +72,7 @@ void setSpeed(int16_t Vtx, int16_t Vty, int16_t Wt) {
             mc.motorForward(MLEFT, speed);
             mc.motorReverse(MRIGHT, speed);
         }
-        analogWrite(BUILTINLED, turn);
+        analogWrite(BUILTINLED, abs(turn));
     }
     else {
         mc.motorsStop();
@@ -111,7 +113,7 @@ void receiveCallback(const uint8_t *macAddr, const uint8_t *data, int dataLen) {
     char macStr[18];
     formatMacAddress(macAddr, macStr, 18);
     // debug log the message to the serial port
-    Serial.printf("Received message from: %s - %s\n", macStr, buffer);
+    // Serial.printf("Received message from: %s - %s\n", macStr, buffer);
     // what are our instructions
     
     // char udodata[dataLen];
