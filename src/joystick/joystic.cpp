@@ -1,7 +1,6 @@
 #include <M5StickC.h>
 #include <WiFi.h>
-#include <WiFiUdp.h>
-#include <OTAHandler.h>
+#include <esp_now.h>
 #include <ConfigApp.hpp>
 #include <pb_decode.h>
 #include <pb_encode.h>
@@ -17,23 +16,8 @@ extern const unsigned char connect_off[800];
 uint64_t realTime[4], time_count = 0;
 bool k_ready = false;
 uint32_t key_count = 0;
+bool ledOn = false;
 
-IPAddress local_IP(192, 168, 4, 100 + SYSNUM);
-IPAddress gateway(192, 168, 4, 1);
-IPAddress subnet(255, 255, 0, 0);
-IPAddress primaryDNS(8, 8, 8, 8);    //optional
-IPAddress secondaryDNS(8, 8, 4, 4);  //optional
-
-const char *ssid = "ROBOTAP";
-const char *password = "77777777";
-
-String PREF_LAST_DEVICE = "pldevice";
-String lastDevice = "";
-
-WiFiUDP udp;
-
-char APName[20];
-String WfifAPBuff[16];
 uint32_t count_bn_a = 0, choose = 0;
 String ssidname;
 
@@ -44,6 +28,41 @@ uint32_t count = 0;
 uint8_t buffer[128];
 size_t message_length;
 bool status;
+
+void formatMacAddress(const uint8_t *macAddr, char *buffer, int maxLength) {
+    snprintf(buffer, maxLength, "%02x:%02x:%02x:%02x:%02x:%02x", macAddr[0], macAddr[1], macAddr[2], macAddr[3], macAddr[4], macAddr[5]);
+}
+
+void receiveCallback(const uint8_t *macAddr, const uint8_t *data, int dataLen) {
+    // only allow a maximum of 250 characters in the message + a null terminating byte
+    char buffer[ESP_NOW_MAX_DATA_LEN + 1];
+    int msgLen = min(ESP_NOW_MAX_DATA_LEN, dataLen);
+    strncpy(buffer, (const char *)data, msgLen);
+    // make sure we are null terminated
+    buffer[msgLen] = 0;
+    // format the mac address
+    char macStr[18];
+    formatMacAddress(macAddr, macStr, 18);
+    // debug log the message to the serial port
+    Serial.printf("Received message from: %s - %s\n", macStr, buffer);
+    // what are our instructions
+    if (strcmp("on", buffer) == 0) {
+        ledOn = true;
+    } else {
+        ledOn = false;
+    }
+    digitalWrite(2, ledOn);
+}
+
+// callback when data is sent
+void sentCallback(const uint8_t *macAddr, esp_now_send_status_t status) {
+    char macStr[18];
+    formatMacAddress(macAddr, macStr, 18);
+    // Serial.print("Last Packet Sent to: ");
+    // Serial.println(macStr);
+    // Serial.print("Last Packet Send Status: ");
+    // Serial.println(status == ESP_NOW_SEND_SUCCESS ? "Delivery Success" : "Delivery Fail");
+}
 
 /**
  * @brief sendMessage via protobuf (nanopb)
@@ -82,13 +101,39 @@ bool sendMessage(uint8_t ax, uint8_t ay, uint8_t az, uint8_t ck) {
 
     sendBuff[message_length + 3] = 0xee;  // UDP end?
 
-    if (WiFi.status() == WL_CONNECTED) {
-        udp.beginPacket(IPAddress(192, 168, 4, 1), 1000 + SYSNUM);
-        udp.write(sendBuff, message_length + 4);
-        udp.endPacket();
-        return true;
+    // this will broadcast a message to everyone in range
+    uint8_t broadcastAddress[] = {0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF};
+    esp_now_peer_info_t peerInfo = {};
+    memcpy(&peerInfo.peer_addr, broadcastAddress, 6);
+    if (!esp_now_is_peer_exist(broadcastAddress)) {
+        esp_now_add_peer(&peerInfo);
     }
-
+    esp_err_t result = esp_now_send(broadcastAddress, sendBuff, message_length + 4);
+    // and this will send a message to a specific device
+    /*uint8_t peerAddress[] = {0x3C, 0x71, 0xBF, 0x47, 0xA5, 0xC0};
+    esp_now_peer_info_t peerInfo = {};
+    memcpy(&peerInfo.peer_addr, peerAddress, 6);
+    if (!esp_now_is_peer_exist(peerAddress))
+    {
+      esp_now_add_peer(&peerInfo);
+    }
+    esp_err_t result = esp_now_send(peerAddress, (const uint8_t *)message.c_str(), message.length());*/
+    if (result == ESP_OK) {
+        // Serial.println("Broadcast message success");
+        return true;
+    } else if (result == ESP_ERR_ESPNOW_NOT_INIT) {
+        Serial.println("ESPNOW not Init.");
+    } else if (result == ESP_ERR_ESPNOW_ARG) {
+        Serial.println("Invalid Argument");
+    } else if (result == ESP_ERR_ESPNOW_INTERNAL) {
+        Serial.println("Internal Error");
+    } else if (result == ESP_ERR_ESPNOW_NO_MEM) {
+        Serial.println("ESP_ERR_ESPNOW_NO_MEM");
+    } else if (result == ESP_ERR_ESPNOW_NOT_FOUND) {
+        Serial.println("Peer not found.");
+    } else {
+        Serial.println("Unknown error");
+    }
     return false;
 }
 
@@ -113,17 +158,6 @@ uint16_t I2CRead16bit(uint8_t Addr) {
     return ReData;
 }
 
-void otaLoop() {
-    if (WiFi.isConnected()) {
-        ota.loop();
-    }
-}
-
-void otaInit() {
-    ota.setup("AIROBOTJC", "AIROBOT");
-    // ota.setCallbacks(new MyOTAHandlerCallbacks());
-}
-
 void setup() {
     M5.begin();
     Wire.begin(0, 26, 10000);
@@ -142,93 +176,30 @@ void setup() {
 
     M5.update();
 
-    lastDevice = cfg.loadString(PREF_LAST_DEVICE);
+    // lastDevice = cfg.loadString(PREF_LAST_DEVICE);
 
     Disbuff.setTextSize(1);
     Disbuff.setTextColor(WHITE);
     Disbuff.fillRect(0, 0, 80, 20, Disbuff.color565(50, 50, 50));
 
-    if ((lastDevice.length() == 0) || (M5.BtnA.read() == 1)) {
-        WiFi.mode(WIFI_STA);
-        int n = WiFi.scanNetworks();
-        if (n == 0) {
-            Disbuff.setCursor(5, 20);
-            Disbuff.printf("no networks");
+    WiFi.mode(WIFI_STA);
+    // startup ESP Now
+    Serial.println("ESPNow Init");
+    Serial.println(WiFi.macAddress());
+    // shut down wifi
+    WiFi.disconnect();
 
-        } else {
-            int count = 0;
-            for (int i = 0; i < n; ++i) {
-                if (WiFi.SSID(i).indexOf("ROBOTAP") != -1) {
-                    if (count == 0) {
-                        Disbuff.setTextColor(GREEN);
-                    } else {
-                        Disbuff.setTextColor(WHITE);
-                    }
-                    Disbuff.setCursor(5, 25 + count * 10);
-                    String str = WiFi.SSID(i);
-                    Disbuff.printf(str.c_str());
-                    WfifAPBuff[count] = WiFi.SSID(i);
-                    count++;
-                }
-            }
-            Disbuff.pushSprite(0, 0);
-            while (1) {
-                if (M5.BtnA.read() == 1) {
-                    if (count_bn_a >= 100) {
-                        count_bn_a = 101;
-                        cfg.saveString(PREF_LAST_DEVICE, WfifAPBuff[choose]);
-                        Serial.printf("saved device: %s\n", WfifAPBuff[choose].c_str());
-                        ssidname = WfifAPBuff[choose];
-                        break;
-                    }
-                    count_bn_a++;
-                    Serial.printf("count_bn_a %d \n", count_bn_a);
-                } else if ((M5.BtnA.isReleased()) && (count_bn_a != 0)) {
-                    Serial.printf("count_bn_a %d", count_bn_a);
-                    if (count_bn_a > 100) {
-                    } else {
-                        choose++;
-                        if (choose >= count) {
-                            choose = 0;
-                        }
-                        Disbuff.fillRect(0, 0, 80, 20, Disbuff.color565(50, 50, 50));
-                        for (int i = 0; i < count; i++) {
-                            Disbuff.setCursor(5, 25 + i * 10);
-                            if (choose == i) {
-                                Disbuff.setTextColor(GREEN);
-                            } else {
-                                Disbuff.setTextColor(WHITE);
-                            }
-                            Disbuff.printf(WfifAPBuff[i].c_str());
-                        }
-                        Disbuff.pushSprite(0, 0);
-                    }
-                    count_bn_a = 0;
-                }
-                delay(10);
-                M5.update();
-            }
-        }
-    } else if (lastDevice.length() > 0) {
-        ssidname = lastDevice;
+    if (esp_now_init() == ESP_OK) {
+        Serial.println("ESPNow Init Success");
+        esp_now_register_recv_cb(receiveCallback);
+        esp_now_register_send_cb(sentCallback);
+    } else {
+        Serial.println("ESPNow Init Failed");
+        delay(3000);
+        ESP.restart();
     }
 
     Disbuff.fillRect(0, 20, 80, 140, BLACK);
-
-    if (!WiFi.config(local_IP, gateway, subnet, primaryDNS, secondaryDNS)) {
-        Serial.println("STA Failed to configure");
-    }
-
-    WiFi.begin(ssidname.c_str(), password);
-
-    while (WiFi.status() != WL_CONNECTED) {
-        delay(500);
-        Serial.print(".");
-    }
-
-    otaInit();
-    udp.begin(2000);
-
     Disbuff.pushImage(0, 0, 20, 20, (uint16_t *)connect_on);
     Disbuff.pushSprite(0, 0);
     Disbuff.setTextColor(WHITE);
@@ -250,7 +221,6 @@ void drawValues(uint8_t ax, uint8_t ay, uint8_t az) {
 }
 
 void loop() {
-
     if (M5.BtnA.read() == 1) {
         if (count++ > 10) M5.Axp.PowerOff();
     }
@@ -259,32 +229,24 @@ void loop() {
         AngleBuff[i] = I2CRead16bit(0x50 + i * 2);
     }
 
-    if (WiFi.status() != WL_CONNECTED) {
-        Disbuff.pushImage(0, 0, 20, 20, (uint16_t *)connect_off);
-        Disbuff.pushSprite(0, 0);
-        if (count++ > 1000) {
-            WiFi.config(local_IP, gateway, subnet, primaryDNS, secondaryDNS);
-            count = 0;
-        }
+    Disbuff.pushImage(0, 0, 20, 20, (uint16_t *)connect_on);
+    Disbuff.pushSprite(0, 0);
 
-    } else {
-        Disbuff.pushImage(0, 0, 20, 20, (uint16_t *)connect_on);
-        Disbuff.pushSprite(0, 0);
+    uint8_t ax = map(AngleBuff[0], 0, 4000, 0, 200);
+    uint8_t ay = map(AngleBuff[1], 0, 4000, 0, 200);
+    uint8_t az = map(AngleBuff[2], 0, 4000, 0, 200);
+    uint8_t ck = 0x00;
 
-        uint8_t ax = map(AngleBuff[0], 0, 4000, 0, 200);
-        uint8_t ay = map(AngleBuff[1], 0, 4000, 0, 200);
-        uint8_t az = map(AngleBuff[2], 0, 4000, 0, 200);
-        uint8_t ck = 0x00;
-
-        if ((ax > 110) || (ax < 90) ||
-            (ay > 110) || (ay < 90) ||
-            (az > 110) || (az < 90)) {
-            ck = 0x01;
-        }
-        drawValues(ax, ay, az);
-        sendMessage(ax, ay, az, ck);
-        delay(10);
+    if ((ax > 110) || (ax < 90) ||
+        (ay > 110) || (ay < 90) ||
+        (az > 110) || (az < 90)) {
+        ck = 0x01;
     }
-    otaLoop();
+
+    drawValues(ax, ay, az);
+    sendMessage(ax, ay, az, ck);
+
     M5.update();
+
+    delay(10);
 }
