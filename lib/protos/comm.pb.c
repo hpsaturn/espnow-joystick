@@ -9,4 +9,7 @@
 PB_BIND(JoystickMessage, JoystickMessage, AUTO)
 
 
+PB_BIND(TelemetryMessage, TelemetryMessage, AUTO)
+
+
 
