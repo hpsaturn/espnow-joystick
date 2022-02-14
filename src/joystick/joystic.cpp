@@ -48,7 +48,7 @@ uint16_t I2CRead16bit(uint8_t Addr) {
 
 class MyTelemetryCallbacks : public EspNowTelemetryCallbacks{
     void onTelemetryMsg(TelemetryMessage tm){
-
+        Serial.println("TelemetryMessage");
     };
     void onError(){
 

@@ -15,6 +15,7 @@ class EspNowJoystick {
     public:
         bool devmode = false;
         JoystickMessage jm = JoystickMessage_init_zero;
+        TelemetryMessage tm = TelemetryMessage_init_zero;
         EspNowJoystick();
         bool init(bool debug = false);
         void setJoystickCallbacks(EspNowJoystickCallbacks* pCallbacks);
@@ -29,6 +30,7 @@ class EspNowJoystick {
     private: 
         String _ESP_ID;
         String getDeviceId();
+        bool sendMessage(uint32_t message_length);
         
 };
 
