@@ -11,19 +11,36 @@
 
 /* Struct definitions */
 typedef struct _JoystickMessage {
+    uint32_t en;
     uint32_t ax;
     uint32_t ay;
     uint32_t az;
-    uint32_t ba;
+    uint32_t bA;
+    uint32_t bB;
+    uint32_t bX;
+    uint32_t bY;
+    uint32_t bL;
+    uint32_t bR;
+    uint32_t bU;
+    uint32_t bD;
+    uint32_t bS;
+    uint32_t bT;
     uint32_t ck;
 } JoystickMessage;
 
 typedef struct _TelemetryMessage {
-    uint32_t bl;
-    float bv;
+    uint32_t btl;
+    float btv;
     uint32_t x;
     uint32_t y;
     uint32_t z;
+    uint32_t e1;
+    uint32_t e2;
+    uint32_t e3;
+    uint32_t e4;
+    float t1;
+    float t2;
+    uint32_t ck;
 } TelemetryMessage;
 
 
@@ -32,39 +49,73 @@ extern "C" {
 #endif
 
 /* Initializer values for message structs */
-#define JoystickMessage_init_default             {0, 0, 0, 0, 0}
-#define TelemetryMessage_init_default            {0, 0, 0, 0, 0}
-#define JoystickMessage_init_zero                {0, 0, 0, 0, 0}
-#define TelemetryMessage_init_zero               {0, 0, 0, 0, 0}
+#define JoystickMessage_init_default             {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}
+#define TelemetryMessage_init_default            {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}
+#define JoystickMessage_init_zero                {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}
+#define TelemetryMessage_init_zero               {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}
 
 /* Field tags (for use in manual encoding/decoding) */
-#define JoystickMessage_ax_tag                   1
-#define JoystickMessage_ay_tag                   2
-#define JoystickMessage_az_tag                   3
-#define JoystickMessage_ba_tag                   4
-#define JoystickMessage_ck_tag                   5
-#define TelemetryMessage_bl_tag                  1
-#define TelemetryMessage_bv_tag                  2
+#define JoystickMessage_en_tag                   1
+#define JoystickMessage_ax_tag                   2
+#define JoystickMessage_ay_tag                   3
+#define JoystickMessage_az_tag                   4
+#define JoystickMessage_bA_tag                   5
+#define JoystickMessage_bB_tag                   6
+#define JoystickMessage_bX_tag                   7
+#define JoystickMessage_bY_tag                   8
+#define JoystickMessage_bL_tag                   9
+#define JoystickMessage_bR_tag                   10
+#define JoystickMessage_bU_tag                   11
+#define JoystickMessage_bD_tag                   12
+#define JoystickMessage_bS_tag                   13
+#define JoystickMessage_bT_tag                   14
+#define JoystickMessage_ck_tag                   15
+#define TelemetryMessage_btl_tag                 1
+#define TelemetryMessage_btv_tag                 2
 #define TelemetryMessage_x_tag                   3
 #define TelemetryMessage_y_tag                   4
 #define TelemetryMessage_z_tag                   5
+#define TelemetryMessage_e1_tag                  6
+#define TelemetryMessage_e2_tag                  7
+#define TelemetryMessage_e3_tag                  8
+#define TelemetryMessage_e4_tag                  9
+#define TelemetryMessage_t1_tag                  10
+#define TelemetryMessage_t2_tag                  11
+#define TelemetryMessage_ck_tag                  12
 
 /* Struct field encoding specification for nanopb */
 #define JoystickMessage_FIELDLIST(X, a) \
-X(a, STATIC,   REQUIRED, UINT32,   ax,                1) \
-X(a, STATIC,   REQUIRED, UINT32,   ay,                2) \
-X(a, STATIC,   REQUIRED, UINT32,   az,                3) \
-X(a, STATIC,   REQUIRED, UINT32,   ba,                4) \
-X(a, STATIC,   REQUIRED, UINT32,   ck,                5)
+X(a, STATIC,   REQUIRED, UINT32,   en,                1) \
+X(a, STATIC,   REQUIRED, UINT32,   ax,                2) \
+X(a, STATIC,   REQUIRED, UINT32,   ay,                3) \
+X(a, STATIC,   REQUIRED, UINT32,   az,                4) \
+X(a, STATIC,   REQUIRED, UINT32,   bA,                5) \
+X(a, STATIC,   REQUIRED, UINT32,   bB,                6) \
+X(a, STATIC,   REQUIRED, UINT32,   bX,                7) \
+X(a, STATIC,   REQUIRED, UINT32,   bY,                8) \
+X(a, STATIC,   REQUIRED, UINT32,   bL,                9) \
+X(a, STATIC,   REQUIRED, UINT32,   bR,               10) \
+X(a, STATIC,   REQUIRED, UINT32,   bU,               11) \
+X(a, STATIC,   REQUIRED, UINT32,   bD,               12) \
+X(a, STATIC,   REQUIRED, UINT32,   bS,               13) \
+X(a, STATIC,   REQUIRED, UINT32,   bT,               14) \
+X(a, STATIC,   REQUIRED, UINT32,   ck,               15)
 #define JoystickMessage_CALLBACK NULL
 #define JoystickMessage_DEFAULT NULL
 
 #define TelemetryMessage_FIELDLIST(X, a) \
-X(a, STATIC,   REQUIRED, UINT32,   bl,                1) \
-X(a, STATIC,   REQUIRED, FLOAT,    bv,                2) \
+X(a, STATIC,   REQUIRED, UINT32,   btl,               1) \
+X(a, STATIC,   REQUIRED, FLOAT,    btv,               2) \
 X(a, STATIC,   REQUIRED, UINT32,   x,                 3) \
 X(a, STATIC,   REQUIRED, UINT32,   y,                 4) \
-X(a, STATIC,   REQUIRED, UINT32,   z,                 5)
+X(a, STATIC,   REQUIRED, UINT32,   z,                 5) \
+X(a, STATIC,   REQUIRED, UINT32,   e1,                6) \
+X(a, STATIC,   REQUIRED, UINT32,   e2,                7) \
+X(a, STATIC,   REQUIRED, UINT32,   e3,                8) \
+X(a, STATIC,   REQUIRED, UINT32,   e4,                9) \
+X(a, STATIC,   REQUIRED, FLOAT,    t1,               10) \
+X(a, STATIC,   REQUIRED, FLOAT,    t2,               11) \
+X(a, STATIC,   REQUIRED, UINT32,   ck,               12)
 #define TelemetryMessage_CALLBACK NULL
 #define TelemetryMessage_DEFAULT NULL
 
@@ -76,8 +127,8 @@ extern const pb_msgdesc_t TelemetryMessage_msg;
 #define TelemetryMessage_fields &TelemetryMessage_msg
 
 /* Maximum encoded size of messages (where known) */
-#define JoystickMessage_size                     30
-#define TelemetryMessage_size                    29
+#define JoystickMessage_size                     90
+#define TelemetryMessage_size                    69
 
 #ifdef __cplusplus
 } /* extern "C" */

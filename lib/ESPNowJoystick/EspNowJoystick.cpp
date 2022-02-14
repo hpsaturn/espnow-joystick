@@ -31,7 +31,6 @@ bool EspNowJoystick::sendJoystickMsg(JoystickMessage jm) {
         printf("Encoding failed: %s\n", PB_GET_ERROR(&stream));
         return false;
     }
-
     // this will broadcast a message to everyone in range
     uint8_t broadcastAddress[] = {0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF};
     esp_now_peer_info_t peerInfo = {};
@@ -51,7 +50,7 @@ bool EspNowJoystick::sendJoystickMsg(JoystickMessage jm) {
     esp_err_t result = esp_now_send(peerAddress, (const uint8_t *)message.c_str(), message.length());*/
     if (result == ESP_OK) {
         // Serial.println("Broadcast message success");
-        Serial.printf("Send message : %s\n", buffer);
+        // Serial.printf("Send message : size:%i %s\n", message_length, buffer);
         return true;
     } else if (result == ESP_ERR_ESPNOW_NOT_INIT) {
         Serial.println("ESPNOW not Init.");
@@ -92,23 +91,13 @@ bool joystickDecodeMessage(uint16_t message_length) {
 
 void joystickRecvCallback(const uint8_t *macAddr, const uint8_t *data, int dataLen) {
     // only allow a maximum of 250 characters in the message + a null terminating byte
-    char udodata[ESP_NOW_MAX_DATA_LEN + 1];
     int msgLen = min(ESP_NOW_MAX_DATA_LEN, dataLen);
-    strncpy(udodata, (const char *)data, msgLen);
-    // make sure we are null terminated
-    udodata[msgLen] = 0;
-    // format the mac address
-    char macStr[18];
-    formatMacAddress(macAddr, macStr, 18);
+    // char macStr[18];
+    // formatMacAddress(macAddr, macStr, 18);
     // debug log the message to the serial port
-    Serial.printf("Received message from: %s - %s\n", macStr, buffer);
-    // what are our instructions
-    
-    // char udodata[dataLen];
-    // udp.read(udodata, udplength);
-    // IPAddress udp_client = udp.remoteIP();
-    for (int i = 0; i < msgLen; i++) {
-        buffer[i] = udodata[i];
+    // Serial.printf("Received message from: %s size:%d\n", macStr,msgLen);
+    for (int i=0; i<msgLen; i++) {
+        buffer[i] = data[i];
     }
     joystickDecodeMessage(msgLen);
     
@@ -174,6 +163,23 @@ void telemetrySendCallback(const uint8_t *macAddr, esp_now_send_status_t status)
 }
 
 JoystickMessage EspNowJoystick::newJoystickMsg() {
+    jm.en = 1;
+    jm.ax = 1;
+    jm.ay = 1;
+    jm.az = 1;
+    jm.bA = 1;
+    jm.bB = 1;
+    jm.bX = 1;
+    jm.bY = 1;
+    jm.bL = 1;
+    jm.bR = 1;
+    jm.bU = 1;
+    jm.bD = 1;
+    jm.bS = 1;
+    jm.bT = 1;
+    jm.ck = 1;
+    jm.en = 1;
+    jm.ck = 1;
     return jm;
 }
 
@@ -211,6 +217,7 @@ bool EspNowJoystick::init(bool debug) {
     } else {
         Serial.println("ESPNow Init Failed");
         delay(100);
+        ESP.restart();
         return false;
     }
 }

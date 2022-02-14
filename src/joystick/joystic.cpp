@@ -134,12 +134,12 @@ void loop() {
         (az > 110) || (az < 90)) {
         ck = 0x01;
     }
-    
+
     jm.ay = ay;
     jm.ax = ax;
     jm.az = az;
-    jm.ba = 1;
     jm.ck = ck;
     joystick.sendJoystickMsg(jm);
     updateDisplay(ax, ay, az);
+    // delay(5000);
 }
