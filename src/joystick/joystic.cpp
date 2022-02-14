@@ -48,7 +48,7 @@ uint16_t I2CRead16bit(uint8_t Addr) {
 
 class MyTelemetryCallbacks : public EspNowTelemetryCallbacks{
     void onTelemetryMsg(TelemetryMessage tm){
-        Serial.println("TelemetryMessage");
+        // Serial.println("TelemetryMessage");
     };
     void onError(){
 
@@ -65,7 +65,7 @@ void setup() {
     Disbuff.createSprite(80, 160);
     Disbuff.setSwapBytes(true);
     Disbuff.fillRect(0, 0, 80, 20, Disbuff.color565(50, 50, 50));
-    Disbuff.pushImage(0, 0, 20, 20, (uint16_t *)connect_off);
+    Disbuff.pushImage(0, 0, 20, 20, (uint16_t *)connect_on);
     Disbuff.pushSprite(0, 0);
 
     uint8_t res = I2CRead8bit(0x32);
@@ -77,15 +77,15 @@ void setup() {
 
     joystick.setTelemetryCallbacks(new MyTelemetryCallbacks());
     jm = joystick.newJoystickMsg();
-    while(!joystick.init());
+    joystick.init();
 
     Disbuff.setTextSize(1);
     Disbuff.setTextColor(WHITE);
-    Disbuff.fillRect(0, 0, 80, 20, Disbuff.color565(50, 50, 50));
-    Disbuff.fillRect(0, 20, 80, 140, BLACK);
-    Disbuff.pushImage(0, 0, 20, 20, (uint16_t *)connect_on);
-    Disbuff.pushSprite(0, 0);
-    Disbuff.setTextColor(WHITE);
+    // Disbuff.fillRect(0, 0, 80, 20, Disbuff.color565(50, 50, 50));
+    // Disbuff.fillRect(0, 20, 80, 140, BLACK);
+    // Disbuff.pushImage(0, 0, 20, 20, (uint16_t *)connect_on);
+    // Disbuff.pushSprite(0, 0);
+    // Disbuff.setTextColor(WHITE);
     count=0;
 }
 
@@ -108,7 +108,7 @@ void updateDisplay(uint8_t ax, uint8_t ay, uint8_t az) {
     static uint_least32_t guiTimeStamp = 0;
     if (millis() - guiTimeStamp > 80) {
         guiTimeStamp = millis();
-        Disbuff.pushImage(0, 0, 20, 20, (uint16_t *)connect_on);
+        Disbuff.pushImage(0, 0, 20, 20, (uint16_t *)connect_off);
         Disbuff.pushSprite(0, 0);
         drawValues(ax, ay, az);
         M5.update();
@@ -141,5 +141,4 @@ void loop() {
     jm.ck = ck;
     joystick.sendJoystickMsg(jm);
     updateDisplay(ax, ay, az);
-    // delay(5000);
 }

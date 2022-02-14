@@ -24,97 +24,75 @@ void formatMacAddress(const uint8_t *macAddr, char *buffer, int maxLength) {
     snprintf(buffer, maxLength, "%02x:%02x:%02x:%02x:%02x:%02x", macAddr[0], macAddr[1], macAddr[2], macAddr[3], macAddr[4], macAddr[5]);
 }
 
-bool EspNowJoystick::sendJoystickMsg(JoystickMessage jm) {
+void printBuffer(uint8_t *buffer, uint32_t length) {
+    for (uint32_t i = 0; i < length; i++) {
+        Serial.printf("%02X", buffer[i]);
+    }
+    Serial.println();
+}
 
+void printMacAddress(const uint8_t *macAddress) {
+    char macStr[18];
+    formatMacAddress(macAddress, macStr, 18);
+    Serial.println(macStr);
+}
+
+bool EspNowJoystick::sendJoystickMsg(JoystickMessage jm) {
     pb_ostream_t stream = pb_ostream_from_buffer(send_buffer, sizeof(send_buffer));
     bool status = pb_encode(&stream, JoystickMessage_fields, &jm);
     size_t message_length = stream.bytes_written;
-
     if (!status) {
         printf("Encoding failed: %s\n", PB_GET_ERROR(&stream));
         return false;
     }
-
     return sendMessage(message_length);
-    
 }
 
 bool joystickDecodeMessage(uint16_t message_length) {
-    /* This is the buffer where we will store our message. */
-
-    /* Create a stream that reads from the buffer. */
     pb_istream_t stream = pb_istream_from_buffer(recv_buffer, message_length);
-
-    /* Now we are ready to decode the message. */
     bool status = pb_decode(&stream, JoystickMessage_fields, &_jm);
-
-    /* Check for errors... */
     if (!status) {
-        printf("Decoding joystick data failed: %s\n", PB_GET_ERROR(&stream));
+        printf("Decoding joystick msg failed: %s\n", PB_GET_ERROR(&stream));
         return false;
     }
     if (joystick._pEspNowJoystickCallbacks != nullptr) {
         joystick._pEspNowJoystickCallbacks->onJoystickMsg(_jm);
     }
-    // joystick.getInstance()->onJoystickMsg(jm);
     return true;
 }
 
 void joystickRecvCallback(const uint8_t *macAddr, const uint8_t *data, int dataLen) {
-    // only allow a maximum of 250 characters in the message + a null terminating byte
     int msgLen = min(ESP_NOW_MAX_DATA_LEN, dataLen);
-    // char macStr[18];
-    // formatMacAddress(macAddr, macStr, 18);
-    // debug log the message to the serial port
-    // Serial.printf("Received message from: %s size:%d\n", macStr,msgLen);
-    for (int i=0; i<msgLen; i++) {
-        recv_buffer[i] = data[i];
-    }
+    memcpy(recv_buffer, data, msgLen); 
     joystickDecodeMessage(msgLen);
-    
 }
 
 // callback when data is sent
 void joystickSendCallback(const uint8_t *macAddr, esp_now_send_status_t status) {
     if (!joystick.devmode) return;
-    char macStr[18];
-    formatMacAddress(macAddr, macStr, 18);
-    Serial.print("Last Packet Sent to: ");
-    Serial.println(macStr);
+    printMacAddress(macAddr); 
     Serial.print("Last Packet Send Status: ");
     Serial.println(status == ESP_NOW_SEND_SUCCESS ? "Delivery Success" : "Delivery Fail");
 }
 
 bool EspNowJoystick::sendTelemetryMsg(TelemetryMessage tm) {
-
     pb_ostream_t stream = pb_ostream_from_buffer(send_buffer, sizeof(send_buffer));
     bool status = pb_encode(&stream, TelemetryMessage_fields, &tm);
     size_t message_length = stream.bytes_written;
-
     if (!status) {
         printf("Encoding Telemetry msg failed: %s\n", PB_GET_ERROR(&stream));
         return false;
     }
-
     return sendMessage(message_length);
-    
 }
 
 bool telemetryDecodeMessage(uint16_t message_length) {
-    /* This is the buffer where we will store our message. */
-
-    /* Create a stream that reads from the buffer. */
     pb_istream_t stream = pb_istream_from_buffer(recv_buffer, message_length);
-
-    /* Now we are ready to decode the message. */
     bool status = pb_decode(&stream, TelemetryMessage_fields, &_tm);
-
-    /* Check for errors... */
     if (!status) {
-        printf("Decoding telemetry data failed: %s\n", PB_GET_ERROR(&stream));
+        printf("Decoding telemetry msg failed: %s\n", PB_GET_ERROR(&stream));
         return false;
     }
-
     if (joystick._pEspNowTelemetryCallbacks != nullptr) {
         joystick._pEspNowTelemetryCallbacks->onTelemetryMsg(_tm);
     }
@@ -122,21 +100,15 @@ bool telemetryDecodeMessage(uint16_t message_length) {
 }
 
 void telemetryRecvCallback(const uint8_t *macAddr, const uint8_t *data, int dataLen) {
-    // only allow a maximum of 250 characters in the message + a null terminating byte
     int msgLen = min(ESP_NOW_MAX_DATA_LEN, dataLen);
-    char macStr[18];
-    formatMacAddress(macAddr, macStr, 18);
-    Serial.printf("Received telemetry msg from: %s size:%d\n", macStr,msgLen);
-    for (int i=0; i<msgLen; i++) {
-        recv_buffer[i] = data[i];
-    }
+    memcpy(recv_buffer, data, msgLen); 
     telemetryDecodeMessage(msgLen);
 }
 
 void telemetrySendCallback(const uint8_t *macAddr, esp_now_send_status_t status) {
 }
 
-bool EspNowJoystick::sendMessage(uint32_t message_length) {
+bool EspNowJoystick::sendMessage(uint32_t msglen) {
     // this will broadcast a message to everyone in range
     uint8_t broadcastAddress[] = {0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF};
     esp_now_peer_info_t peerInfo = {};
@@ -144,7 +116,7 @@ bool EspNowJoystick::sendMessage(uint32_t message_length) {
     if (!esp_now_is_peer_exist(broadcastAddress)) {
         esp_now_add_peer(&peerInfo);
     }
-    esp_err_t result = esp_now_send(broadcastAddress, send_buffer, message_length);
+    esp_err_t result = esp_now_send(broadcastAddress, send_buffer, msglen);
     // and this will send a message to a specific device
     /*uint8_t peerAddress[] = {0x3C, 0x71, 0xBF, 0x47, 0xA5, 0xC0};
     esp_now_peer_info_t peerInfo = {};
@@ -155,8 +127,11 @@ bool EspNowJoystick::sendMessage(uint32_t message_length) {
     }
     esp_err_t result = esp_now_send(peerAddress, (const uint8_t *)message.c_str(), message.length());*/
     if (result == ESP_OK) {
-        // Serial.println("Broadcast message success");
-        // Serial.printf("Send message : size:%i %s\n", message_length, buffer);
+        if (joystick.devmode) {
+            Serial.println("Broadcast message success");
+            Serial.printf("Send message size: %i\n", msglen);
+            printBuffer(send_buffer, msglen);
+        }
         return true;
     } else if (result == ESP_ERR_ESPNOW_NOT_INIT) {
         Serial.println("ESPNOW not Init.");
@@ -175,44 +150,10 @@ bool EspNowJoystick::sendMessage(uint32_t message_length) {
 }
 
 JoystickMessage EspNowJoystick::newJoystickMsg() {
-    // jm.en = 1;
-    // jm.ax = 1;
-    // jm.ay = 1;
-    // jm.az = 1;
-    // jm.bA = 1;
-    // jm.bB = 1;
-    // jm.bX = 1;
-    // jm.bY = 1;
-    // jm.bL = 1;
-    // jm.bR = 1;
-    // jm.bU = 1;
-    // jm.bD = 1;
-    // jm.bS = 1;
-    // jm.bT = 1;
-    // jm.ck = 1;
-    // jm.en = 1;
-    // jm.ck = 1;
     return jm;
 }
 
 TelemetryMessage EspNowJoystick::newTelemetryMsg() {
-    // jm.en = 1;
-    // jm.ax = 1;
-    // jm.ay = 1;
-    // jm.az = 1;
-    // jm.bA = 1;
-    // jm.bB = 1;
-    // jm.bX = 1;
-    // jm.bY = 1;
-    // jm.bL = 1;
-    // jm.bR = 1;
-    // jm.bU = 1;
-    // jm.bD = 1;
-    // jm.bS = 1;
-    // jm.bT = 1;
-    // jm.ck = 1;
-    // jm.en = 1;
-    // jm.ck = 1;
     return tm;
 }
 
@@ -230,6 +171,7 @@ bool EspNowJoystick::init(bool debug) {
     Serial.println(WiFi.macAddress());
     // shut down wifi
     WiFi.disconnect();
+    delay(100);
 
     if (esp_now_init() == ESP_OK) {
         Serial.println("ESPNow Init Success");
