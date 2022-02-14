@@ -136,7 +136,8 @@ void loop() {
     jm.ax = ax;
     jm.ay = ay;
     jm.az = az;
-    jm.ck = ck; 
+    jm.ba = 1;
+    jm.ck = ck;
     joystick.sendJoystickMsg(jm);
     updateDisplay(ax, ay, az);
 }

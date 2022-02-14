@@ -1,8 +1,7 @@
 #include <EspNowJoystick.hpp>
 
 JoystickMessage _jm = JoystickMessage_init_zero;
-TelemetryMessage _tm = TelemetryMessage_init_zero;
-uint8_t buffer[128];
+uint8_t buffer[256];
 
 EspNowJoystick::EspNowJoystick() {
     _pEspNowJoystickCallbacks = nullptr;
@@ -32,6 +31,8 @@ bool EspNowJoystick::sendJoystickMsg(JoystickMessage jm) {
         printf("Encoding failed: %s\n", PB_GET_ERROR(&stream));
         return false;
     }
+
+    // Serial.println("Sending joystick msg: "+String(jm.ax) + " " + String(jm.ay) + " " + String(jm.az));
 
     uint8_t sendBuff[message_length + 4];
 
@@ -64,6 +65,7 @@ bool EspNowJoystick::sendJoystickMsg(JoystickMessage jm) {
     esp_err_t result = esp_now_send(peerAddress, (const uint8_t *)message.c_str(), message.length());*/
     if (result == ESP_OK) {
         // Serial.println("Broadcast message success");
+        Serial.printf("Send message : %s\n", sendBuff);
         return true;
     } else if (result == ESP_ERR_ESPNOW_NOT_INIT) {
         Serial.println("ESPNOW not Init.");
@@ -113,7 +115,7 @@ void joystickRecvCallback(const uint8_t *macAddr, const uint8_t *data, int dataL
     char macStr[18];
     formatMacAddress(macAddr, macStr, 18);
     // debug log the message to the serial port
-    // Serial.printf("Received message from: %s - %s\n", macStr, buffer);
+    Serial.printf("Received message from: %s - %s\n", macStr, buffer);
     // what are our instructions
     
     // char udodata[dataLen];
@@ -207,12 +209,12 @@ bool EspNowJoystick::init(bool debug) {
         Serial.println("ESPNow Init Success");
         if(_pEspNowJoystickCallbacks != nullptr) {
             esp_now_register_recv_cb(joystickRecvCallback);
-            esp_now_register_send_cb(telemetrySendCallback);
+            // esp_now_register_send_cb(telemetrySendCallback);
             return true;
         }
         else if(_pEspNowTelemetryCallbacks != nullptr) {
             esp_now_register_recv_cb(telemetryRecvCallback);
-            esp_now_register_send_cb(joystickSendCallback);
+            // esp_now_register_send_cb(joystickSendCallback);
             return true;
         }
         else {
