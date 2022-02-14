@@ -23,7 +23,7 @@ uint16_t AngleBuff[4];
 uint32_t count = 0;
 
 EspNowJoystick joystick;
-JoystickMessage jm = JoystickMessage_init_zero;
+JoystickMessage jm;
 
 uint8_t I2CRead8bit(uint8_t Addr) {
     Wire.beginTransmission(0x38);
@@ -76,6 +76,7 @@ void setup() {
     // lastDevice = cfg.loadString(PREF_LAST_DEVICE);
 
     joystick.setTelemetryCallbacks(new MyTelemetryCallbacks());
+    jm = joystick.newJoystickMsg();
     while(!joystick.init());
 
     Disbuff.setTextSize(1);
@@ -133,8 +134,9 @@ void loop() {
         (az > 110) || (az < 90)) {
         ck = 0x01;
     }
-    jm.ax = ax;
+    
     jm.ay = ay;
+    jm.ax = ax;
     jm.az = az;
     jm.ba = 1;
     jm.ck = ck;

@@ -173,6 +173,10 @@ void telemetryRecvCallback(const uint8_t *macAddr, const uint8_t *data, int data
 void telemetrySendCallback(const uint8_t *macAddr, esp_now_send_status_t status) {
 }
 
+JoystickMessage EspNowJoystick::newJoystickMsg() {
+    return jm;
+}
+
 String EspNowJoystick::getDeviceId() { 
     uint32_t chipId = 0;
     for (int i = 0; i < 17; i = i + 8) chipId |= ((ESP.getEfuseMac() >> (40 - i)) & 0xff) << i;

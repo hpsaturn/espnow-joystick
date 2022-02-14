@@ -14,8 +14,8 @@ typedef struct _JoystickMessage {
     uint32_t ax;
     uint32_t ay;
     uint32_t az;
-    uint32_t ck;
     uint32_t ba;
+    uint32_t ck;
 } JoystickMessage;
 
 typedef struct _TelemetryMessage {
@@ -41,8 +41,8 @@ extern "C" {
 #define JoystickMessage_ax_tag                   1
 #define JoystickMessage_ay_tag                   2
 #define JoystickMessage_az_tag                   3
-#define JoystickMessage_ck_tag                   4
-#define JoystickMessage_ba_tag                   5
+#define JoystickMessage_ba_tag                   4
+#define JoystickMessage_ck_tag                   5
 #define TelemetryMessage_bl_tag                  1
 #define TelemetryMessage_bv_tag                  2
 #define TelemetryMessage_x_tag                   3
@@ -54,8 +54,8 @@ extern "C" {
 X(a, STATIC,   REQUIRED, UINT32,   ax,                1) \
 X(a, STATIC,   REQUIRED, UINT32,   ay,                2) \
 X(a, STATIC,   REQUIRED, UINT32,   az,                3) \
-X(a, STATIC,   REQUIRED, UINT32,   ck,                4) \
-X(a, STATIC,   REQUIRED, UINT32,   ba,                5)
+X(a, STATIC,   REQUIRED, UINT32,   ba,                4) \
+X(a, STATIC,   REQUIRED, UINT32,   ck,                5)
 #define JoystickMessage_CALLBACK NULL
 #define JoystickMessage_DEFAULT NULL
 

@@ -7,7 +7,7 @@ message JoystickMessage {
     required uint32 ax = 1;   // left stick x position
     required uint32 ay = 2;   // left stick y position
     required uint32 az = 3;   // right stick x position
-    required uint32 ba = 4;   // buttonA data
+    optional uint32 ba = 4;   // buttonA data
     required uint32 ck = 5;   // check data
 }
 

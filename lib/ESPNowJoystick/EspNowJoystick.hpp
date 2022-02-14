@@ -14,6 +14,7 @@ class EspNowTelemetryCallbacks;
 class EspNowJoystick {
     public:
         bool devmode = false;
+        JoystickMessage jm = JoystickMessage_init_zero;
         EspNowJoystick();
         bool init(bool debug = false);
         void setJoystickCallbacks(EspNowJoystickCallbacks* pCallbacks);
