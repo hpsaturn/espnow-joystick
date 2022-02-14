@@ -32,20 +32,6 @@ bool EspNowJoystick::sendJoystickMsg(JoystickMessage jm) {
         return false;
     }
 
-    // Serial.println("Sending joystick msg: "+String(jm.ax) + " " + String(jm.ay) + " " + String(jm.az));
-
-    uint8_t sendBuff[message_length + 4];
-
-    sendBuff[0] = 0xAA;  // UDP header?
-    sendBuff[1] = 0x55;
-    sendBuff[2] = SYSNUM;  // UDP type?
-
-    for (int i = 0; i < message_length; i++) {
-        sendBuff[i + 3] = buffer[i];  // proto message
-    }
-
-    sendBuff[message_length + 3] = 0xee;  // UDP end?
-
     // this will broadcast a message to everyone in range
     uint8_t broadcastAddress[] = {0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF};
     esp_now_peer_info_t peerInfo = {};
@@ -53,7 +39,7 @@ bool EspNowJoystick::sendJoystickMsg(JoystickMessage jm) {
     if (!esp_now_is_peer_exist(broadcastAddress)) {
         esp_now_add_peer(&peerInfo);
     }
-    esp_err_t result = esp_now_send(broadcastAddress, sendBuff, message_length + 4);
+    esp_err_t result = esp_now_send(broadcastAddress, buffer, message_length);
     // and this will send a message to a specific device
     /*uint8_t peerAddress[] = {0x3C, 0x71, 0xBF, 0x47, 0xA5, 0xC0};
     esp_now_peer_info_t peerInfo = {};
@@ -65,7 +51,7 @@ bool EspNowJoystick::sendJoystickMsg(JoystickMessage jm) {
     esp_err_t result = esp_now_send(peerAddress, (const uint8_t *)message.c_str(), message.length());*/
     if (result == ESP_OK) {
         // Serial.println("Broadcast message success");
-        Serial.printf("Send message : %s\n", sendBuff);
+        Serial.printf("Send message : %s\n", buffer);
         return true;
     } else if (result == ESP_ERR_ESPNOW_NOT_INIT) {
         Serial.println("ESPNOW not Init.");
@@ -121,14 +107,11 @@ void joystickRecvCallback(const uint8_t *macAddr, const uint8_t *data, int dataL
     // char udodata[dataLen];
     // udp.read(udodata, udplength);
     // IPAddress udp_client = udp.remoteIP();
-    if ((udodata[0] == 0xAA) && (udodata[1] == 0x55) && (udodata[msgLen - 1] == 0xee)) {
-        for (int i = 0; i < msgLen - 4; i++) {
-            buffer[i] = udodata[i + 3];
-        }
-        joystickDecodeMessage(msgLen - 4);
-    } else {
-        // TODO
+    for (int i = 0; i < msgLen; i++) {
+        buffer[i] = udodata[i];
     }
+    joystickDecodeMessage(msgLen);
+    
 }
 
 // callback when data is sent
