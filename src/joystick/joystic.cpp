@@ -1,10 +1,6 @@
 #include <M5StickC.h>
 #include <EspNowJoystick.hpp>
 #include <ConfigApp.hpp>
-#include <pb_decode.h>
-#include <pb_encode.h>
-
-#include "comm.pb.h"
 
 TFT_eSprite Disbuff = TFT_eSprite(&M5.Lcd);
 extern const unsigned char connect_on[800];
@@ -18,6 +14,7 @@ uint32_t suspendCount = 0;
 bool receiverConnected = false;
 float receiverBattVolt = 0.0;
 uint16_t receiverBattLevel = 0;
+uint_least32_t heartBeatStamp = 0;
 
 EspNowJoystick joystick;
 JoystickMessage jm;
@@ -50,9 +47,9 @@ class MyTelemetryCallbacks : public EspNowTelemetryCallbacks{
         receiverBattLevel = tm.btl;
         receiverConnected = tm.e1;
         suspendCount = 0;
+        heartBeatStamp = millis();
     };
     void onError(){
-
     };
 };
 
@@ -83,7 +80,7 @@ void drawValues(uint8_t ax, uint8_t ay, uint8_t az) {
 
 void updateDisplay(uint8_t ax, uint8_t ay, uint8_t az) {
     static uint_least32_t guiTimeStamp = 0;
-    if (millis() - guiTimeStamp > 80) {
+    if (millis() - guiTimeStamp > 100) {
         guiTimeStamp = millis();
         if(receiverConnected)
             Disbuff.pushImage(0, 0, 20, 20, (uint16_t *)connect_on);
@@ -92,6 +89,10 @@ void updateDisplay(uint8_t ax, uint8_t ay, uint8_t az) {
         Disbuff.pushSprite(0, 0);
         drawValues(ax, ay, az);
         M5.update();
+        if (millis() - heartBeatStamp > 1000) {
+            Serial.println("Heartbeat timeout");
+            receiverConnected = false; // heartbeat should be renew this flag
+        }
     }
 }
 

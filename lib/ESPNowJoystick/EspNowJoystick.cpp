@@ -65,14 +65,15 @@ void joystickRecvCallback(const uint8_t *macAddr, const uint8_t *data, int dataL
     int msgLen = min(ESP_NOW_MAX_DATA_LEN, dataLen);
     memcpy(recv_buffer, data, msgLen); 
     joystickDecodeMessage(msgLen);
+    // printMacAddress(macAddr);
 }
 
 // callback when data is sent
 void joystickSendCallback(const uint8_t *macAddr, esp_now_send_status_t status) {
-    if (!joystick.devmode) return;
-    printMacAddress(macAddr); 
-    Serial.print("Last Packet Send Status: ");
-    Serial.println(status == ESP_NOW_SEND_SUCCESS ? "Delivery Success" : "Delivery Fail");
+    // if (!joystick.devmode) return;
+    // printMacAddress(macAddr); 
+    // Serial.print("Last Packet Send Status: ");
+    // Serial.println(status == ESP_NOW_SEND_SUCCESS ? "Delivery Success" : "Delivery Fail");
 }
 
 bool EspNowJoystick::sendTelemetryMsg(TelemetryMessage tm) {
@@ -103,6 +104,7 @@ void telemetryRecvCallback(const uint8_t *macAddr, const uint8_t *data, int data
     int msgLen = min(ESP_NOW_MAX_DATA_LEN, dataLen);
     memcpy(recv_buffer, data, msgLen); 
     telemetryDecodeMessage(msgLen);
+    // printMacAddress(macAddr);
 }
 
 void telemetrySendCallback(const uint8_t *macAddr, esp_now_send_status_t status) {
@@ -117,15 +119,17 @@ bool EspNowJoystick::sendMessage(uint32_t msglen) {
         esp_now_add_peer(&peerInfo);
     }
     esp_err_t result = esp_now_send(broadcastAddress, send_buffer, msglen);
+
     // and this will send a message to a specific device
-    /*uint8_t peerAddress[] = {0x3C, 0x71, 0xBF, 0x47, 0xA5, 0xC0};
-    esp_now_peer_info_t peerInfo = {};
-    memcpy(&peerInfo.peer_addr, peerAddress, 6);
-    if (!esp_now_is_peer_exist(peerAddress))
-    {
-      esp_now_add_peer(&peerInfo);
-    }
-    esp_err_t result = esp_now_send(peerAddress, (const uint8_t *)message.c_str(), message.length());*/
+    // uint8_t peerAddress[] = {0x3C,0x61,0x05,0x0C,0x93,0xB8};
+    // esp_now_peer_info_t peerInfo = {};
+    // memcpy(&peerInfo.peer_addr, peerAddress, 6);
+    // if (!esp_now_is_peer_exist(peerAddress))
+    // {
+    //   esp_now_add_peer(&peerInfo);
+    // }
+    // esp_err_t result = esp_now_send(peerAddress, send_buffer, msglen);
+    
     if (result == ESP_OK) {
         if (joystick.devmode) {
             Serial.println("Broadcast message success");
