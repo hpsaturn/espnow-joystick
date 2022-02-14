@@ -11,8 +11,8 @@ message JoystickMessage {
 }
 
 message TelemetryMessage {
-    required uint32 batt_level = 1;
-    required float batt_volt = 2;
+    required uint32 bl = 1;
+    required float bv = 2;
     required uint32 x = 3;
     required uint32 y = 4;
     required uint32 z = 5;
