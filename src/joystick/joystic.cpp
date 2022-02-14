@@ -10,17 +10,14 @@ TFT_eSprite Disbuff = TFT_eSprite(&M5.Lcd);
 extern const unsigned char connect_on[800];
 extern const unsigned char connect_off[800];
 
-uint64_t realTime[4], time_count = 0;
-bool k_ready = false;
-uint32_t key_count = 0;
-bool ledOn = false;
-
-uint32_t count_bn_a = 0, choose = 0;
-String ssidname;
-
 uint8_t adc_value[5] = {0};
 uint16_t AngleBuff[4];
-uint32_t count = 0;
+uint32_t btnPowerOffcount = 0;
+uint32_t suspendCount = 0;
+
+bool receiverConnected = false;
+float receiverBattVolt = 0.0;
+uint16_t receiverBattLevel = 0;
 
 EspNowJoystick joystick;
 JoystickMessage jm;
@@ -48,12 +45,55 @@ uint16_t I2CRead16bit(uint8_t Addr) {
 
 class MyTelemetryCallbacks : public EspNowTelemetryCallbacks{
     void onTelemetryMsg(TelemetryMessage tm){
-        // Serial.println("TelemetryMessage");
+        Serial.printf("TelemetryMsg: %0.2fV %d%%\n", tm.btv, tm.btl);
+        receiverBattVolt = tm.btv;
+        receiverBattLevel = tm.btl;
+        receiverConnected = tm.e1;
+        suspendCount = 0;
     };
     void onError(){
 
     };
 };
+
+void drawValues(uint8_t ax, uint8_t ay, uint8_t az) {
+    Disbuff.fillRect(0, 30, 80, 130, BLACK);
+    Disbuff.setTextColor(BLUE);
+    Disbuff.setCursor(10, 26);
+    Disbuff.printf("JOYSTICK:");
+    Disbuff.setTextColor(WHITE);
+    Disbuff.setCursor(10, 42);
+    Disbuff.printf("AX: %04d", ax);
+    Disbuff.setCursor(10, 54);
+    Disbuff.printf("AY: %04d", ay);
+    Disbuff.setCursor(10, 66);
+    Disbuff.printf("AZ: %04d", az);
+    Disbuff.setCursor(10, 82);
+    Disbuff.printf("Volt: %.2fv", M5.Axp.GetBatVoltage());
+    Disbuff.drawLine(0, 99, 80, 99, WHITE);
+    Disbuff.setCursor(10, 106);
+    Disbuff.setTextColor(MAGENTA);
+    Disbuff.printf("RECEIVER:");
+    Disbuff.setTextColor(WHITE);
+    Disbuff.setCursor(10, 122);
+    Disbuff.printf("Batt: %03d%%", receiverBattLevel);
+    Disbuff.setCursor(10, 134);
+    Disbuff.printf("BatV: %.2fv", receiverBattVolt);
+}
+
+void updateDisplay(uint8_t ax, uint8_t ay, uint8_t az) {
+    static uint_least32_t guiTimeStamp = 0;
+    if (millis() - guiTimeStamp > 80) {
+        guiTimeStamp = millis();
+        if(receiverConnected)
+            Disbuff.pushImage(0, 0, 20, 20, (uint16_t *)connect_on);
+        else
+            Disbuff.pushImage(0, 0, 20, 20, (uint16_t *)connect_off);
+        Disbuff.pushSprite(0, 0);
+        drawValues(ax, ay, az);
+        M5.update();
+    }
+}
 
 void setup() {
     M5.begin();
@@ -73,51 +113,20 @@ void setup() {
 
     M5.update();
 
-    // lastDevice = cfg.loadString(PREF_LAST_DEVICE);
-
     joystick.setTelemetryCallbacks(new MyTelemetryCallbacks());
     jm = joystick.newJoystickMsg();
     joystick.init();
 
     Disbuff.setTextSize(1);
     Disbuff.setTextColor(WHITE);
-    // Disbuff.fillRect(0, 0, 80, 20, Disbuff.color565(50, 50, 50));
-    // Disbuff.fillRect(0, 20, 80, 140, BLACK);
-    // Disbuff.pushImage(0, 0, 20, 20, (uint16_t *)connect_on);
-    // Disbuff.pushSprite(0, 0);
-    // Disbuff.setTextColor(WHITE);
-    count=0;
-}
-
-void drawValues(uint8_t ax, uint8_t ay, uint8_t az) {
-    Disbuff.fillRect(0, 30, 80, 130, BLACK);
-    Disbuff.setCursor(10, 30);
-    Disbuff.printf("AX: %04d", ax);
-    Disbuff.setCursor(10, 45);
-    Disbuff.printf("AY: %04d", ay);
-    Disbuff.setCursor(10, 60);
-    Disbuff.printf("AZ: %04d", az);
-    Disbuff.setCursor(10, 85);
-    Disbuff.printf("V: %.2fv", M5.Axp.GetBatVoltage());
-    Disbuff.setCursor(10, 95);
-    Disbuff.printf("I: %.1fma", M5.Axp.GetBatCurrent());
-}
-
-
-void updateDisplay(uint8_t ax, uint8_t ay, uint8_t az) {
-    static uint_least32_t guiTimeStamp = 0;
-    if (millis() - guiTimeStamp > 80) {
-        guiTimeStamp = millis();
-        Disbuff.pushImage(0, 0, 20, 20, (uint16_t *)connect_off);
-        Disbuff.pushSprite(0, 0);
-        drawValues(ax, ay, az);
-        M5.update();
-    }
 }
 
 void loop() {
+    // auto power off if receiver is not connected
+    if (!receiverConnected && suspendCount++ > 500) M5.Axp.PowerOff();  
+
     if (M5.BtnA.read() == 1) {
-        if (count++ > 10) M5.Axp.PowerOff();
+        if (btnPowerOffcount++ > 10) M5.Axp.PowerOff();
     }
 
     for (int i = 0; i < 4; i++) {
