@@ -1,0 +1,56 @@
+{
+  "name": "EspNowJoystick",
+  "version": "0.0.7",
+  "homepage":"https://github.com/hpsaturn/espnow-joystick",
+  "keywords": 
+  [ 
+    "M5Stack",
+    "Joystick",
+    "ESPNow",
+    "ESP-Now",
+    "Protocol",
+    "Buffers",
+    "SPI",
+    "I2C",
+    "Console",
+    "Games",
+    "Analog",
+    "Nanopb",
+    "PM10"
+  ],
+  "description":"Abstraccion of ESP-Now and Protocol Buffers to have improved joystick for any kind of hardware, with a simple callback implementations.",
+  "repository":
+  {
+    "type": "git",
+    "url": "https://github.com/hpsaturn/espnow-joystick"
+  },
+  "frameworks": ["espidf", "arduino"],
+  "platforms":
+  [
+    "espressif32",
+    "espressif8266"
+  ],
+  "export": {
+    "exclude":
+    [
+        ".github",
+        ".travis.yml",
+        ".gitignore",
+        "deploy.sh",
+        "releases"
+    ]
+  },
+  "authors":
+  [
+    {
+      "name": "@hpsaturn",
+      "url": "https://hpsaturn.com",
+      "maintainer": true
+    }  
+  ],
+  "license": "GPL-3.0-only",
+  "dependencies":
+  [
+    {"name":"Nanopb", "owner":"nanopb", "version":"0.4.6"}
+  ]
+}
