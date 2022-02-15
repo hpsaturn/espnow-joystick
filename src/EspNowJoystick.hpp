@@ -1,3 +1,19 @@
+/************************************************************************
+# This file is part of the ESPNow Joystick library.
+# https://github.com/hpsaturn/espnow-joystick
+# Copyright (c) 2022, @hpsaturn, Antonio Vanegas
+# https://hpsaturn.com, All rights reserved.
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, version 3.
+#
+# This program is distributed in the hope that it will be useful, but
+# WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+# General Public License for more details.
+*************************************************************************/
+
 #ifndef ESPNOW_JOYSTICK_H
 #define ESPNOW_JOYSTICK_H
 
@@ -5,10 +21,10 @@
 #include <esp_now.h>
 #include <pb_decode.h>
 #include <pb_encode.h>
-
 #include "comm.pb.h"
 
-#define SYSNUM 3
+#define CSL_VERSION "0.0.7"
+#define CSL_REVISION 072
 
 class EspNowJoystickCallbacks;
 class EspNowTelemetryCallbacks;
