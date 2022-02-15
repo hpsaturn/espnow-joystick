@@ -1,15 +1,16 @@
 
 # ESPNow Joystick 
 
-Abstraccion of ESPNow and Protocol Buffers to have improved joystick for any kind of joysitck hardware, with a simple callback implementations.
+Abstraccion of ESP-Now and Protocol Buffers to have improved joystick for any kind of hardware, with a simple callback implementations.
 
 ## TODO
 
-- [x] Espnow abstraction (broadcast only for now)
-- [x] Nanopb protos implementation (improve payload and channel)
+- [x] ESP-Now abstraction (broadcast only for now)
+- [x] Nanopb protos implementation (improved payload performance)
 - [x] Telemetry and Joystick callbacks
 - [x] Full joystick and receiver example on M5Stack Joytstick
 - [ ] Basic examples with differente hardware
+- [ ] Custom proto definitions
 - [ ] Limit to only specific receiver (now the joystick handled many at the same time :D)
 
 [Demo video](https://www.youtube.com/watch?v=pZbMmkq8tUw)
@@ -95,3 +96,41 @@ void setup() {
 void loop() {}
 ```
 
+## Proto Definitions
+
+*Only for information*, **you don't need to do anything here**. This the current payload protocol that use the library for default. But you only need set the messages like the examples, i.e: `jm.bA = 1;` in your code.
+
+```cpp
+syntax = "proto2";
+
+message JoystickMessage {
+    required sint32 ax = 1;  // left stick x position
+    required sint32 ay = 2;  // left stick y position
+    required sint32 az = 3;  // right stick z position
+    required sint32 aw = 4;  // right stick w position
+    required int32 bA = 5;   // buttonA data
+    required int32 bB = 6;   // buttonB data
+    required int32 bX = 7;   // buttonX data
+    required int32 bY = 8;   // buttonY data
+    required int32 bL = 9;   // buttonL data
+    required int32 bR = 10;  // buttonR data
+    required int32 bU = 11;  // buttonUp data
+    required int32 bD = 12;  // buttonDown data
+    required int32 ck = 13;  // check data
+}
+
+message TelemetryMessage {
+    required uint32 btl = 1; // battery level
+    required float  btv = 2; // battery voltage
+    required sint32 x = 3;   // x position
+    required sint32 y = 4;   // y position
+    required sint32 z = 5;   // z position
+    required bool e1 = 6;    // event1 data
+    required bool e2 = 7;    // event2 data
+    required bool e3 = 8;    // event3 data
+    required float t1 = 9;   // variable1 data
+    required float t2 = 10;  // variable2 data
+    required uint32 ck = 11; // check data
+}
+```
+In the next version the idea its maybe pass a custom proto for improve the size or extend the current protocol. The current version only consume 25 bytes on the Joystick message.
