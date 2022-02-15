@@ -6,7 +6,7 @@ Abstraccion of ESP-Now and Protocol Buffers to have improved joystick for any ki
 ## TODO
 
 - [x] ESP-Now abstraction (broadcast only for now)
-- [x] Nanopb protos implementation (improved payload performance)
+- [x] Nanopb protos implementation (improve payload and channel)
 - [x] Telemetry and Joystick callbacks
 - [x] Full joystick and receiver example on M5Stack Joytstick
 - [ ] Basic examples with differente hardware
@@ -98,7 +98,7 @@ void loop() {}
 
 ## Proto Definitions
 
-*Only for information*, **you don't need to do anything here**. This the current payload protocol that use the library for default. But you only need set the messages like the examples, i.e: `jm.bA = 1;` in your code.
+Only for information, **you don't need to do anything here**. This the current payload protocol that use the library for default. But you only need set the messages like the examples, i.e: `jm.bA = 1;` in your code.
 
 ```cpp
 syntax = "proto2";
@@ -134,3 +134,18 @@ message TelemetryMessage {
 }
 ```
 In the next version the idea its maybe pass a custom proto for improve the size or extend the current protocol. The current version only consume 25 bytes on the Joystick message.
+
+## Changelog
+
+### r072v0.0.7
+
+[![screenshot20220215_010838small](https://user-images.githubusercontent.com/423856/154026452-cd96ca60-f828-4463-8909-a6da1e114667.jpg)](https://www.youtube.com/watch?v=pZbMmkq8tUw)
+
+- [x] Full ESP-Now abstraction with broadcast support and easy callbacks
+- [x] Joystick and telemetry messages implemented with Nanopb protos
+- [x] Basi debug mode
+- [x] Full example included with M5Stack Joystick and Arkanoid game
+- [x] Full example of basic two motor robot (receiver)
+- [x] Basic examples   
+
+
