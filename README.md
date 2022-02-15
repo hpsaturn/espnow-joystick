@@ -3,20 +3,29 @@
 
 Abstraccion of ESPNow and Protocol Buffers to have improved joystick for any kind of joysitck hardware, with a simple callback implementations.
 
-# Joystick Implementation
+## TODO
+
+- [x] Espnow abstraction (broadcast only for now)
+- [x] Nanopb protos implementation (improve payload and channel)
+- [x] Telemetry and Joystick callbacks
+- [x] Full joystick and receiver example on M5Stack Joytstick
+- [ ] Basic examples with differente hardware
+- [ ] Limit to only specific receiver (now the joystick handled many at the same time :D)
+
+[Demo video](https://www.youtube.com/watch?v=pZbMmkq8tUw)
+
+## Joystick Implementation
 
 You only need pass the Joystick message and fill any of the possibilities, for example:
 
 ```cpp
 EspNowJoystick joystick;
 JoystickMessage jm;
+bool receiverConnected;
 
-// callback to telemetries values
+// callback to telemetries values (not mandatory)
 class MyTelemetryCallbacks : public EspNowTelemetryCallbacks{
     void onTelemetryMsg(TelemetryMessage tm){
-        Serial.printf("TelemetryMsg: %0.2fV %d%%\n", tm.btv, tm.btl);
-        receiverBattVolt = tm.btv;
-        receiverBattLevel = tm.btl;
         receiverConnected = tm.e1;
     };
     void onError(){
@@ -34,7 +43,7 @@ void loop() {
     uint8_t ay = map(random(0,100), 0, 100, 0, 200);
     uint8_t az = map(random(0,100), 0, 100, 0, 200);
 
-    jm.ay = ay;
+    jm.ay = ay;  // You can fill more variables. See the comm.proto definitions
     jm.ax = ax;
     jm.az = az;
 
@@ -51,6 +60,7 @@ You only need pass the Telemetry message if you want, it is not mandatory, and i
 EspNowJoystick joystick;
 TelemetryMessage tm;
 
+// optional: Send telemetry or status of the receiver
 void sendHeartbeat() {
     static uint_least32_t timeStamp = 0;
     if (millis() - timeStamp > 500) {
@@ -60,6 +70,7 @@ void sendHeartbeat() {
     }
 }
 
+// Joystick data
 class MyJoystickCallback : public EspNowJoystickCallbacks {
     void onJoystickMsg(JoystickMessage jm){
         if (jm.ck == 0x01) {
