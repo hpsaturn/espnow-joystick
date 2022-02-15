@@ -7,8 +7,8 @@
 
 SRC_VER=`cat library.properties | grep version | sed -n -e 's/^.*version=//p'`
 LIB_NAM=`cat library.properties | grep name | sed -n -e 's/^.*name=//p'`
-HDR_VER=`cat src/${HDR_VER}.hpp | grep CSL_VERSION | awk '{ print $3 }'`
-SRC_REV=`cat src/${HDR_VER}.hpp | grep CSL_REVISION | awk '{ print $3 }'`
+HDR_VER=`cat src/${LIB_NAM}.hpp | grep CSL_VERSION | awk '{ print $3 }'`
+SRC_REV=`cat src/${LIB_NAM}.hpp | grep CSL_REVISION | awk '{ print $3 }'`
 
 DATE=`date +%Y%m%d`
 RELDIR="releases"
