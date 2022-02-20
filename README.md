@@ -31,7 +31,7 @@ class MyTelemetryCallbacks : public EspNowTelemetryCallbacks{
     void onTelemetryMsg(TelemetryMessage tm){
         receiverConnected = tm.e1;
     };
-    void onError(){
+    void onError(const char *msg){
     };
 };
 
@@ -83,7 +83,7 @@ class MyJoystickCallback : public EspNowJoystickCallbacks {
         }
         sendHeartbeat();
     };
-    void onError(){
+    void onError(const char *msg){
         setSpeed(0, 0, 0);
         Serial.println("Error");
     };
@@ -96,6 +96,19 @@ void setup() {
 }
 
 void loop() {}
+```
+
+## P2P Implementation 
+
+For send to specific device you only need specificate the address of the device, for example:
+
+```cpp
+const uint8_t device1[6] = {0x3C, 0x61, 0x05, 0x0c, 0x93, 0xb8};
+
+void loop() {
+    ...
+    joystick.sendJoystickMsg(jm,device1); 
+}
 ```
 
 ## Proto Definitions
