@@ -23,8 +23,8 @@
 #include <pb_encode.h>
 #include "comm.pb.h"
 
-#define CSL_VERSION "0.0.7"
-#define CSL_REVISION 072
+#define CSL_VERSION "0.0.8"
+#define CSL_REVISION 073
 
 class EspNowJoystickCallbacks;
 class EspNowTelemetryCallbacks;

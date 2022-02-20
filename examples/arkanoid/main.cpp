@@ -62,7 +62,6 @@ void setSpeed(int16_t Vtx, int16_t Vty, int16_t Wt) {
             px = px + turn;
         }
     }
-
 }
 
 void resetVars() {
@@ -236,7 +235,7 @@ class MyJoystickCallback : public EspNowJoystickCallbacks {
             setSpeed(0, 0, 0);
         }
     };
-    void onError(){
+    void onError(const char* msg) {
         setSpeed(0, 0, 0);
         Serial.println("Error");
     };

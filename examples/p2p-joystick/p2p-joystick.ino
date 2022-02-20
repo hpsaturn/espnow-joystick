@@ -5,6 +5,8 @@ EspNowJoystick joystick;
 JoystickMessage jm;
 bool receiverConnected;
 
+const uint8_t device1[6] = {0x3C, 0x61, 0x05, 0x0c, 0x93, 0xb8};
+
 // callback to telemetries values (not mandatory)
 class MyTelemetryCallbacks : public EspNowTelemetryCallbacks{
     void onTelemetryMsg(TelemetryMessage tm){
@@ -30,5 +32,6 @@ void loop() {
     jm.ax = ax;
     jm.az = az;
 
-    joystick.sendJoystickMsg(jm);
+    // joystick.sendJoystickMsg(jm);       // send to all devices (broadcast)
+    joystick.sendJoystickMsg(jm,device1);  // send to specific device
 }

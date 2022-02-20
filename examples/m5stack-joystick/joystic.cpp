@@ -48,7 +48,7 @@ class MyTelemetryCallbacks : public EspNowTelemetryCallbacks{
         suspendCount = 0;
         heartBeatStamp = millis();
     };
-    void onError(){
+    void onError(const char *msg){
     };
 };
 
