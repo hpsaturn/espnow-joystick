@@ -1,4 +1,4 @@
-[![PlatformIO](https://github.com/hpsaturn/espnow-joystick/workflows/PlatformIO/badge.svg)](https://github.com/hpsaturn/espnow-joystick/actions/) ![ViewCount](https://views.whatilearened.today/views/github/kike-canaries/canairio_sensorlib.svg) 
+[![PlatformIO](https://github.com/hpsaturn/espnow-joystick/workflows/PlatformIO/badge.svg)](https://github.com/hpsaturn/espnow-joystick/actions/) ![ViewCount](https://views.whatilearened.today/views/github/hpsaturn/espnow-joystick.svg) 
 
 # ESPNow Joystick 
 
