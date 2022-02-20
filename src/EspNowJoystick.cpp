@@ -38,14 +38,22 @@ void printMacAddress(const uint8_t *macAddress) {
 }
 
 bool EspNowJoystick::sendJoystickMsg(JoystickMessage jm) {
+    return sendMessage(encodeJoystickMsg(jm));
+}
+
+bool EspNowJoystick::sendJoystickMsg(JoystickMessage jm, const uint8_t* mac){
+    return sendMessage(encodeJoystickMsg(jm), mac);
+}
+
+size_t EspNowJoystick::encodeJoystickMsg(JoystickMessage jm) {
     pb_ostream_t stream = pb_ostream_from_buffer(send_buffer, sizeof(send_buffer));
     bool status = pb_encode(&stream, JoystickMessage_fields, &jm);
     size_t message_length = stream.bytes_written;
     if (!status) {
         printf("Encoding failed: %s\n", PB_GET_ERROR(&stream));
-        return false;
+        return 0;
     }
-    return sendMessage(message_length);
+    return message_length;
 }
 
 bool joystickDecodeMessage(uint16_t message_length) {
@@ -65,10 +73,10 @@ void joystickRecvCallback(const uint8_t *macAddr, const uint8_t *data, int dataL
     int msgLen = min(ESP_NOW_MAX_DATA_LEN, dataLen);
     memcpy(recv_buffer, data, msgLen); 
     joystickDecodeMessage(msgLen);
-    // printMacAddress(macAddr);
+    if (joystick.devmode) printMacAddress(macAddr);
 }
 
-// callback when data is sent
+// callback when data is sent. Not necessary for now. 
 void joystickSendCallback(const uint8_t *macAddr, esp_now_send_status_t status) {
     // if (!joystick.devmode) return;
     // printMacAddress(macAddr); 
@@ -77,14 +85,22 @@ void joystickSendCallback(const uint8_t *macAddr, esp_now_send_status_t status) 
 }
 
 bool EspNowJoystick::sendTelemetryMsg(TelemetryMessage tm) {
+    return sendMessage(encodeTelemetryMsg(tm));
+}
+
+bool EspNowJoystick::sendTelemetryMsg(TelemetryMessage tm, const uint8_t* mac){
+    return sendMessage(encodeTelemetryMsg(tm), mac);
+}
+
+size_t EspNowJoystick::encodeTelemetryMsg(TelemetryMessage tm) {
     pb_ostream_t stream = pb_ostream_from_buffer(send_buffer, sizeof(send_buffer));
     bool status = pb_encode(&stream, TelemetryMessage_fields, &tm);
     size_t message_length = stream.bytes_written;
     if (!status) {
         printf("Encoding Telemetry msg failed: %s\n", PB_GET_ERROR(&stream));
-        return false;
+        return 0;
     }
-    return sendMessage(message_length);
+    return message_length;
 }
 
 bool telemetryDecodeMessage(uint16_t message_length) {
@@ -104,53 +120,56 @@ void telemetryRecvCallback(const uint8_t *macAddr, const uint8_t *data, int data
     int msgLen = min(ESP_NOW_MAX_DATA_LEN, dataLen);
     memcpy(recv_buffer, data, msgLen); 
     telemetryDecodeMessage(msgLen);
-    // printMacAddress(macAddr);
+    if(joystick.devmode) printMacAddress(macAddr);
 }
 
 void telemetrySendCallback(const uint8_t *macAddr, esp_now_send_status_t status) {
 }
 
 bool EspNowJoystick::sendMessage(uint32_t msglen) {
-    // this will broadcast a message to everyone in range
-    uint8_t broadcastAddress[] = {0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF};
+    return sendMessage(msglen, broadcastAddress);    
+}
+
+bool EspNowJoystick::sendMessage(uint32_t msglen, const uint8_t *mac) {
     esp_now_peer_info_t peerInfo = {};
-    memcpy(&peerInfo.peer_addr, broadcastAddress, 6);
-    if (!esp_now_is_peer_exist(broadcastAddress)) {
+    memcpy(&peerInfo.peer_addr, mac, 6);
+    if (!esp_now_is_peer_exist(mac)) {
         esp_now_add_peer(&peerInfo);
     }
-    esp_err_t result = esp_now_send(broadcastAddress, send_buffer, msglen);
-
-    // and this will send a message to a specific device
-    // uint8_t peerAddress[] = {0x3C,0x61,0x05,0x0C,0x93,0xB8};
-    // esp_now_peer_info_t peerInfo = {};
-    // memcpy(&peerInfo.peer_addr, peerAddress, 6);
-    // if (!esp_now_is_peer_exist(peerAddress))
-    // {
-    //   esp_now_add_peer(&peerInfo);
-    // }
-    // esp_err_t result = esp_now_send(peerAddress, send_buffer, msglen);
-    
+    esp_err_t result = esp_now_send(mac, send_buffer, msglen);
+   
     if (result == ESP_OK) {
         if (joystick.devmode) {
             Serial.println("Broadcast message success");
+            printMacAddress(mac);
             Serial.printf("Send message size: %i\n", msglen);
             printBuffer(send_buffer, msglen);
         }
         return true;
     } else if (result == ESP_ERR_ESPNOW_NOT_INIT) {
-        Serial.println("ESPNOW not Init.");
+        reportError("ESPNOW not Init.");
     } else if (result == ESP_ERR_ESPNOW_ARG) {
-        Serial.println("Invalid Argument");
+        reportError("Invalid Argument");
     } else if (result == ESP_ERR_ESPNOW_INTERNAL) {
-        Serial.println("Internal Error");
+        reportError("Internal Error");
     } else if (result == ESP_ERR_ESPNOW_NO_MEM) {
-        Serial.println("ESP_ERR_ESPNOW_NO_MEM");
+        reportError("ESP_ERR_ESPNOW_NO_MEM");
     } else if (result == ESP_ERR_ESPNOW_NOT_FOUND) {
-        Serial.println("Peer not found.");
+        reportError("Peer not found.");
     } else {
-        Serial.println("Unknown error");
+        reportError("Unknown error");
     }
     return false;
+}
+
+void EspNowJoystick::reportError(const char *msg) {
+    if (devmode) Serial.println(msg);
+    if (joystick._pEspNowTelemetryCallbacks != nullptr) {
+        joystick._pEspNowTelemetryCallbacks->onError(msg);
+    }
+    if (joystick._pEspNowJoystickCallbacks != nullptr) {
+        joystick._pEspNowJoystickCallbacks->onError(msg);
+    }
 }
 
 JoystickMessage EspNowJoystick::newJoystickMsg() {

@@ -48,10 +48,14 @@ class EspNowJoystick {
     JoystickMessage newJoystickMsg();
 
     bool sendJoystickMsg(JoystickMessage jm);
+    
+    bool sendJoystickMsg(JoystickMessage jm, const uint8_t* mac);
 
     TelemetryMessage newTelemetryMsg();
 
     bool sendTelemetryMsg(TelemetryMessage tm);
+    
+    bool sendTelemetryMsg(TelemetryMessage tm, const uint8_t* mac);
 
     EspNowJoystick* getInstance();
 
@@ -60,25 +64,36 @@ class EspNowJoystick {
     EspNowTelemetryCallbacks* _pEspNowTelemetryCallbacks = nullptr;
 
    private:
+    
+    uint8_t broadcastAddress[6] = {0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF};
+
     String _ESP_ID;
+
+    size_t encodeJoystickMsg(JoystickMessage jm);
+    
+    size_t encodeTelemetryMsg(TelemetryMessage tm);
 
     String getDeviceId();
 
+    void reportError(const char *msg);
+
     bool sendMessage(uint32_t message_length);
+
+    bool sendMessage(uint32_t msglen, const uint8_t *mac);
 };
 
 class EspNowJoystickCallbacks {
    public:
     virtual ~EspNowJoystickCallbacks(){};
     virtual void onJoystickMsg(JoystickMessage jm);
-    virtual void onError();
+    virtual void onError(const char *msg);
 };
 
 class EspNowTelemetryCallbacks {
    public:
     virtual ~EspNowTelemetryCallbacks(){};
     virtual void onTelemetryMsg(TelemetryMessage jm);
-    virtual void onError();
+    virtual void onError(const char *msg);
 };
 
 #if !defined(NO_GLOBAL_INSTANCES) && !defined(NO_GLOBAL_OTAHANDLER)
