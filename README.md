@@ -1,3 +1,4 @@
+[![PlatformIO](https://github.com/hpsaturn/espnow-joystick/workflows/PlatformIO/badge.svg)](https://github.com/hpsaturn/espnow-joystick/actions/) ![ViewCount](https://views.whatilearened.today/views/github/kike-canaries/canairio_sensorlib.svg) 
 
 # ESPNow Joystick 
 
@@ -9,7 +10,8 @@ Abstraccion of ESP-Now and Protocol Buffers to have improved joystick for any ki
 - [x] Nanopb protos implementation (improve payload and channel)
 - [x] Telemetry and Joystick callbacks
 - [x] Full joystick and receiver example on M5Stack Joytstick
-- [ ] Basic examples with differente hardware
+- [x] Basic examples with differente hardware
+- [x] P2P option for handling single device
 - [ ] Custom proto definitions
 - [ ] Limit to only specific receiver (now the joystick handled many at the same time :D)
 
