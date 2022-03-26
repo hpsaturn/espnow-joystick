@@ -23,8 +23,8 @@
 #include <pb_encode.h>
 #include "comm.pb.h"
 
-#define CSL_VERSION "0.0.8"
-#define CSL_REVISION 073
+#define CSL_VERSION "0.0.9"
+#define CSL_REVISION 083
 
 class EspNowJoystickCallbacks;
 class EspNowTelemetryCallbacks;
@@ -36,6 +36,8 @@ class EspNowJoystick {
     JoystickMessage jm = JoystickMessage_init_zero;
 
     TelemetryMessage tm = TelemetryMessage_init_zero;
+
+    const uint8_t *targetAddress = nullptr; 
 
     EspNowJoystick();
 

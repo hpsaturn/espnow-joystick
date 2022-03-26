@@ -42,6 +42,7 @@ bool EspNowJoystick::sendJoystickMsg(JoystickMessage jm) {
 }
 
 bool EspNowJoystick::sendJoystickMsg(JoystickMessage jm, const uint8_t* mac){
+    targetAddress = mac;
     return sendMessage(encodeJoystickMsg(jm), mac);
 }
 
@@ -117,6 +118,7 @@ bool telemetryDecodeMessage(uint16_t message_length) {
 }
 
 void telemetryRecvCallback(const uint8_t *macAddr, const uint8_t *data, int dataLen) {
+    if (joystick.targetAddress != nullptr && memcmp(joystick.targetAddress, macAddr, 6) != 0) return;
     int msgLen = min(ESP_NOW_MAX_DATA_LEN, dataLen);
     memcpy(recv_buffer, data, msgLen); 
     telemetryDecodeMessage(msgLen);
