@@ -110,6 +110,7 @@ void loop() {
     joystick.sendJoystickMsg(jm,device1); 
 }
 ```
+You can catch the macaddress enabling the debug mode with `joystick.init(true)` on the setup.
 
 ## Proto Definitions
 
