@@ -79,7 +79,7 @@ class EspNowJoystick {
 
     void reportError(const char *msg);
 
-    bool sendMessage(uint32_t message_length);
+    bool sendMessage(uint32_t msglen);
 
     bool sendMessage(uint32_t msglen, const uint8_t *mac);
 };

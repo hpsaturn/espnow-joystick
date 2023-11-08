@@ -5,7 +5,6 @@
 #define BUILTINLED  19
 
 uint32_t count = 0;
-uint8_t IIC_ReState = I2C_ERROR_NO_BEGIN;
 
 #define MRIGHT 1
 #define MLEFT  0
