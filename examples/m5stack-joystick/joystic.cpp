@@ -97,7 +97,7 @@ void updateDisplay(uint8_t ax, uint8_t ay, uint8_t az) {
 
 void setup() {
     M5.begin();
-    Wire.begin(0, 26, 10000);
+    Wire.begin(0, 26);
 
     M5.Lcd.setRotation(4);
     M5.Lcd.setSwapBytes(false);
@@ -122,7 +122,11 @@ void setup() {
 
 void loop() {
     // auto power off if receiver is not connected
-    if (!receiverConnected && suspendCount++ > 500) M5.Axp.PowerOff();  
+    if (!receiverConnected && suspendCount++ > 500) {
+        Serial.println("not receiver detected. Go turn off..");
+        delay(1000);
+        M5.Axp.PowerOff();  
+    }
 
     if (M5.BtnA.read() == 1) {
         if (btnPowerOffcount++ > 10) M5.Axp.PowerOff();

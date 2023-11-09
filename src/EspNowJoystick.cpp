@@ -70,15 +70,23 @@ bool joystickDecodeMessage(uint16_t message_length) {
     return true;
 }
 
+#ifdef ARDUINO_ARCH_ESP32
 void joystickRecvCallback(const uint8_t *macAddr, const uint8_t *data, int dataLen) {
+#else
+void joystickRecvCallback(uint8_t *macAddr, uint8_t *data, uint8_t dataLen) {
+#endif
+    #ifdef ARDUINO_ARCH_ESP32
     int msgLen = min(ESP_NOW_MAX_DATA_LEN, dataLen);
+    #else
+    int msgLen = dataLen;
+    #endif
     memcpy(recv_buffer, data, msgLen); 
     joystickDecodeMessage(msgLen);
     if (joystick.devmode) printMacAddress(macAddr);
 }
 
 // callback when data is sent. Not necessary for now. 
-void joystickSendCallback(const uint8_t *macAddr, esp_now_send_status_t status) {
+void joystickSendCallback(const uint8_t *macAddr, int status) {
     // if (!joystick.devmode) return;
     // printMacAddress(macAddr); 
     // Serial.print("Last Packet Send Status: ");
@@ -117,15 +125,23 @@ bool telemetryDecodeMessage(uint16_t message_length) {
     return true;
 }
 
+#ifdef ARDUINO_ARCH_ESP32
 void telemetryRecvCallback(const uint8_t *macAddr, const uint8_t *data, int dataLen) {
+#else
+void telemetryRecvCallback(uint8_t *macAddr, uint8_t *data, uint8_t dataLen) {
+#endif
     if (joystick.targetAddress != nullptr && memcmp(joystick.targetAddress, macAddr, 6) != 0) return;
+    #ifdef ARDUINO_ARCH_ESP32
     int msgLen = min(ESP_NOW_MAX_DATA_LEN, dataLen);
+    #else
+    int msgLen = dataLen;
+    #endif
     memcpy(recv_buffer, data, msgLen); 
     telemetryDecodeMessage(msgLen);
     if(joystick.devmode) printMacAddress(macAddr);
 }
 
-void telemetrySendCallback(const uint8_t *macAddr, esp_now_send_status_t status) {
+void telemetrySendCallback(const uint8_t *macAddr, int status) {
 }
 
 bool EspNowJoystick::sendMessage(uint32_t msglen) {
@@ -133,13 +149,19 @@ bool EspNowJoystick::sendMessage(uint32_t msglen) {
 }
 
 bool EspNowJoystick::sendMessage(uint32_t msglen, const uint8_t *mac) {
+    #ifdef ARDUINO_ARCH_ESP32
     esp_now_peer_info_t peerInfo = {};
     memcpy(&peerInfo.peer_addr, mac, 6);
     if (!esp_now_is_peer_exist(mac)) {
         esp_now_add_peer(&peerInfo);
     }
     esp_err_t result = esp_now_send(mac, send_buffer, msglen);
-   
+    #else // ESP8266
+    esp_now_set_self_role(ESP_NOW_ROLE_CONTROLLER);
+    // Register peer
+    esp_now_add_peer((uint8 *)mac, ESP_NOW_ROLE_SLAVE, 1, NULL, 0);
+    int result = esp_now_send((uint8 *) mac, (uint8_t *) send_buffer, msglen);
+    #endif
     if (result == ESP_OK) {
         if (joystick.devmode) {
             Serial.println("Broadcast message success");
@@ -148,6 +170,8 @@ bool EspNowJoystick::sendMessage(uint32_t msglen, const uint8_t *mac) {
             printBuffer(send_buffer, msglen);
         }
         return true;
+    
+    #ifdef ARDUINO_ARCH_ESP32
     } else if (result == ESP_ERR_ESPNOW_NOT_INIT) {
         reportError("ESPNOW not Init.");
     } else if (result == ESP_ERR_ESPNOW_ARG) {
@@ -158,6 +182,7 @@ bool EspNowJoystick::sendMessage(uint32_t msglen, const uint8_t *mac) {
         reportError("ESP_ERR_ESPNOW_NO_MEM");
     } else if (result == ESP_ERR_ESPNOW_NOT_FOUND) {
         reportError("Peer not found.");
+    #endif
     } else {
         reportError("Unknown error");
     }
@@ -184,7 +209,11 @@ TelemetryMessage EspNowJoystick::newTelemetryMsg() {
 
 String EspNowJoystick::getDeviceId() { 
     uint32_t chipId = 0;
+    #ifdef ARDUINO_ARCH_ESP32
     for (int i = 0; i < 17; i = i + 8) chipId |= ((ESP.getEfuseMac() >> (40 - i)) & 0xff) << i;
+    #else
+    for (int i = 0; i < 17; i = i + 8) chipId |= ((ESP.getChipId() >> (40 - i)) & 0xff) << i;
+    #endif
     return String(chipId, HEX);
 }
 
@@ -194,11 +223,11 @@ bool EspNowJoystick::init(bool debug) {
     // startup ESP Now
     Serial.println("ESPNow Init");
     Serial.println(WiFi.macAddress());
-    // shut down wifi
+    // shutdown wifi
     WiFi.disconnect();
     delay(100);
 
-    if (esp_now_init() == ESP_OK) {
+    if (esp_now_init() == ESP_OK) { 
         Serial.println("ESPNow Init Success");
         if(_pEspNowJoystickCallbacks != nullptr) {
             esp_now_register_recv_cb(joystickRecvCallback);

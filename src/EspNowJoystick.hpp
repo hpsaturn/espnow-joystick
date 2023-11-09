@@ -17,8 +17,15 @@
 #ifndef ESPNOW_JOYSTICK_H
 #define ESPNOW_JOYSTICK_H
 
+#include <Arduino.h>
+#ifdef ARDUINO_ARCH_ESP32
 #include <WiFi.h>
 #include <esp_now.h>
+#else
+#include <ESP8266WiFi.h>
+#include <espnow.h>
+#define ESP_OK 0
+#endif
 #include <pb_decode.h>
 #include <pb_encode.h>
 #include "comm.pb.h"
