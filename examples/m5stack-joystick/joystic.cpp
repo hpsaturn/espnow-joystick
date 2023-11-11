@@ -41,7 +41,7 @@ uint16_t I2CRead16bit(uint8_t Addr) {
 
 class MyTelemetryCallbacks : public EspNowTelemetryCallbacks{
     void onTelemetryMsg(TelemetryMessage tm){
-        Serial.printf("TelemetryMsg: %0.2fV %d%%\n", tm.btv, tm.btl);
+        // Serial.printf("TelemetryMsg: %0.2fV %d%%\n", tm.btv, tm.btl);
         receiverBattVolt = tm.btv;
         receiverBattLevel = tm.btl;
         receiverConnected = tm.e1;
@@ -89,7 +89,7 @@ void updateDisplay(uint8_t ax, uint8_t ay, uint8_t az) {
         drawValues(ax, ay, az);
         M5.update();
         if (millis() - heartBeatStamp > 1000) {
-            Serial.println("Heartbeat timeout");
+            // Serial.println("Heartbeat timeout");
             receiverConnected = false; // heartbeat should be renew this flag
         }
     }
@@ -122,14 +122,14 @@ void setup() {
 
 void loop() {
     // auto power off if receiver is not connected
-    if (!receiverConnected && suspendCount++ > 500) {
+    if (!receiverConnected && suspendCount++ > 1000) {
         Serial.println("not receiver detected. Go turn off..");
         delay(1000);
         M5.Axp.PowerOff();  
     }
 
     if (M5.BtnA.read() == 1) {
-        if (btnPowerOffcount++ > 10) M5.Axp.PowerOff();
+      if (btnPowerOffcount++ > 10) M5.Axp.PowerOff();
     }
 
     for (int i = 0; i < 4; i++) {
@@ -153,4 +153,5 @@ void loop() {
     jm.ck = ck;
     joystick.sendJoystickMsg(jm);
     updateDisplay(ax, ay, az);
+
 }
