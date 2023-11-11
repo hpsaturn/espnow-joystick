@@ -30,6 +30,10 @@
 #include <pb_encode.h>
 #include "comm.pb.h"
 
+#include <map>
+#include <vector>
+#include <string>
+
 #define CSL_VERSION "0.0.9"
 #define CSL_REVISION 083
 
@@ -65,6 +69,12 @@ class EspNowJoystick {
     bool sendTelemetryMsg(TelemetryMessage tm);
     
     bool sendTelemetryMsg(TelemetryMessage tm, const uint8_t* mac);
+
+    void printReceivers();
+
+    std::vector<uint32_t> getReceivers();
+
+    const uint8_t * getReceiver(uint32_t id);
 
     EspNowJoystick* getInstance();
 

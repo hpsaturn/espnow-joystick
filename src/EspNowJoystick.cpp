@@ -6,6 +6,8 @@ TelemetryMessage _tm = TelemetryMessage_init_zero;
 uint8_t send_buffer[256];
 uint8_t recv_buffer[256];
 
+std::map<uint32_t, std::string> amp;
+
 EspNowJoystick::EspNowJoystick() {
     _pEspNowJoystickCallbacks = nullptr;
     _pEspNowTelemetryCallbacks = nullptr;
@@ -20,8 +22,18 @@ void EspNowJoystick::setTelemetryCallbacks(EspNowTelemetryCallbacks* pCallbacks)
     _pEspNowTelemetryCallbacks = pCallbacks;
 }
 
+uint32_t getReceiverId(const uint8_t *macAddr){
+    return macAddr[0]+macAddr[1]+macAddr[2]+macAddr[3]+macAddr[4]+macAddr[5];
+}
+
 void formatMacAddress(const uint8_t *macAddr, char *buffer, int maxLength) {
     snprintf(buffer, maxLength, "%02x:%02x:%02x:%02x:%02x:%02x", macAddr[0], macAddr[1], macAddr[2], macAddr[3], macAddr[4], macAddr[5]);
+}
+
+void printMacAddress(const uint8_t * macAddress){
+    char macStr[18];
+    formatMacAddress(macAddress, macStr, 18);
+    Serial.println(macStr);
 }
 
 void printBuffer(uint8_t *buffer, uint32_t length) {
@@ -29,12 +41,6 @@ void printBuffer(uint8_t *buffer, uint32_t length) {
         Serial.printf("%02X", buffer[i]);
     }
     Serial.println();
-}
-
-void printMacAddress(const uint8_t *macAddress) {
-    char macStr[18];
-    formatMacAddress(macAddress, macStr, 18);
-    Serial.println(macStr);
 }
 
 bool EspNowJoystick::sendJoystickMsg(JoystickMessage jm) {
@@ -125,11 +131,51 @@ bool telemetryDecodeMessage(uint16_t message_length) {
     return true;
 }
 
+bool checkReceiver(const uint8_t *macAddr) {
+  std::map<uint32_t, std::string>::const_iterator iter;
+  iter = amp.find(getReceiverId(macAddr));
+  if (iter != amp.end()) return true;
+  return false;
+}
+
+std::vector<uint32_t> EspNowJoystick::getReceivers() {
+  std::vector<uint32_t> vints;
+  for (auto const &imap : amp)
+    vints.push_back(imap.first);
+  return vints;
+}
+
+/// returns the MAC address of receiver with this id
+const uint8_t * EspNowJoystick::getReceiver(uint32_t id) {
+  std::map<uint32_t, std::string>::const_iterator iter;
+  iter = amp.find(id);
+  if (iter != amp.end()) return (const uint8_t *)(iter->second.c_str());
+  return nullptr;
+}
+
+void EspNowJoystick::printReceivers() {
+  for (const auto& ka: amp) {
+    char macStr[18];
+    formatMacAddress((const uint8_t *)ka.second.c_str(), macStr, 18);
+    Serial.printf("receiverId: %i [%s]\r\n",ka.first,macStr);
+  }
+}
+
+void saveReceiver(const uint8_t *macAddr) {
+  if (!checkReceiver(macAddr)) {
+    uint32_t id = getReceiverId(macAddr);
+    Serial.printf("[%02d] New receiverId: %i with MAC: ", amp.size()+1, id);
+    printMacAddress(macAddr);
+    amp.insert(std::make_pair(id, std::string((const char *)macAddr)));
+  }
+}
+
 #ifdef ARDUINO_ARCH_ESP32
 void telemetryRecvCallback(const uint8_t *macAddr, const uint8_t *data, int dataLen) {
 #else
 void telemetryRecvCallback(uint8_t *macAddr, uint8_t *data, uint8_t dataLen) {
 #endif
+    saveReceiver(macAddr);
     if (joystick.targetAddress != nullptr && memcmp(joystick.targetAddress, macAddr, 6) != 0) return;
     #ifdef ARDUINO_ARCH_ESP32
     int msgLen = min(ESP_NOW_MAX_DATA_LEN, dataLen);
@@ -158,7 +204,6 @@ bool EspNowJoystick::sendMessage(uint32_t msglen, const uint8_t *mac) {
     esp_err_t result = esp_now_send(mac, send_buffer, msglen);
     #else // ESP8266
     esp_now_set_self_role(ESP_NOW_ROLE_CONTROLLER);
-    // Register peer
     esp_now_add_peer((uint8 *)mac, ESP_NOW_ROLE_SLAVE, 1, NULL, 0);
     int result = esp_now_send((uint8 *) mac, (uint8_t *) send_buffer, msglen);
     #endif
@@ -206,6 +251,12 @@ JoystickMessage EspNowJoystick::newJoystickMsg() {
 TelemetryMessage EspNowJoystick::newTelemetryMsg() {
     return tm;
 }
+
+// std::string EspNowJoystick::getFormattedMAC(const uint8_t *macAddress){
+//     char macStr[18];
+//     formatMacAddress(macAddress, macStr, 18);
+//     return std::string(macStr);
+// }
 
 String EspNowJoystick::getDeviceId() { 
     uint32_t chipId = 0;
