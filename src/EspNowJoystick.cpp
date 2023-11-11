@@ -3,9 +3,13 @@
 JoystickMessage _jm = JoystickMessage_init_zero;
 TelemetryMessage _tm = TelemetryMessage_init_zero;
 
+/// general buffer for msg sender
 uint8_t send_buffer[256];
+
+/// general buffer for receive msgs
 uint8_t recv_buffer[256];
 
+/// receivers map (id,macaddr)
 std::map<uint32_t, std::string> amp;
 
 EspNowJoystick::EspNowJoystick() {
@@ -146,9 +150,9 @@ std::vector<uint32_t> EspNowJoystick::getReceivers() {
 }
 
 /// returns the MAC address of receiver with this id
-const uint8_t * EspNowJoystick::getReceiver(uint32_t id) {
+const uint8_t * EspNowJoystick::getReceiverMacAddr(uint32_t receiverId) {
   std::map<uint32_t, std::string>::const_iterator iter;
-  iter = amp.find(id);
+  iter = amp.find(receiverId);
   if (iter != amp.end()) return (const uint8_t *)(iter->second.c_str());
   return nullptr;
 }
@@ -245,10 +249,12 @@ void EspNowJoystick::reportError(const char *msg) {
 }
 
 JoystickMessage EspNowJoystick::newJoystickMsg() {
+    JoystickMessage jm = JoystickMessage_init_zero;
     return jm;
 }
 
 TelemetryMessage EspNowJoystick::newTelemetryMsg() {
+    TelemetryMessage tm = TelemetryMessage_init_zero;
     return tm;
 }
 
