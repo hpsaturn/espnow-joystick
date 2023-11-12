@@ -1,6 +1,6 @@
 [![PlatformIO](https://github.com/hpsaturn/espnow-joystick/workflows/PlatformIO/badge.svg)](https://github.com/hpsaturn/espnow-joystick/actions/) ![ViewCount](https://views.whatilearened.today/views/github/hpsaturn/espnow-joystick.svg) 
 
-# ESPNow Joystick 
+# ESPNow Joystick
 
 Abstraccion of ESP-Now and Protocol Buffers to have improved joystick for any kind of hardware, with a simple callback implementations.
 
@@ -12,6 +12,9 @@ Abstraccion of ESP-Now and Protocol Buffers to have improved joystick for any ki
 - [x] Full joystick and receiver example on M5Stack Joytstick
 - [x] Basic examples with differente hardware
 - [x] P2P option for handling single device
+- [x] ESP8266 support
+- [x] auto receivers detection. (mac address vector)
+- [x] Dynamic joystick (select one of multi target detected)
 - [ ] Custom proto definitions
 - [ ] Limit to only specific receiver (now the joystick handled many at the same time :D)
 
@@ -52,7 +55,6 @@ void loop() {
 
     joystick.sendJoystickMsg(jm);
 }
-
 ```
 
 ## Receiver Implementation
@@ -98,7 +100,7 @@ void setup() {
 void loop() {}
 ```
 
-## P2P Implementation 
+## P2P Implementation
 
 For send to specific device you only need specificate the address of the device, for example:
 
@@ -110,6 +112,21 @@ void loop() {
     joystick.sendJoystickMsg(jm,device1); 
 }
 ```
+
+## Multiple receivers handling
+
+The last version is able to generate a device Id vector of the devices detected. With it is possible retrieve its mac address of each one. For example:
+
+```cpp
+std::vector<uint32_t> receivers = joystick.getReceivers();
+uint32_t deviceId = receivers[0];
+const uint8_t macAddress = joystick.getReceiverMacAddr(deviceId);
+```
+
+More info in the `m5unified-joystick` example. A little demo of this feature here:
+
+[![ESPNow Joystick multiple receiver demo](https://github.com/hpsaturn/espnow-joystick/assets/423856/c4a59c87-6d21-4183-ac82-f89c8e1bc470)](https://youtu.be/FcnYnp4PD0Y)
+
 You can catch the macaddress enabling the debug mode with `joystick.init(true)` on the setup.
 
 ## Proto Definitions
@@ -149,19 +166,21 @@ message TelemetryMessage {
     required uint32 ck = 11; // check data
 }
 ```
+
 In the next version the idea its maybe pass a custom proto for improve the size or extend the current protocol. The current version only consume 25 bytes on the Joystick message.
 
 ## Changelog
 
-### r072v0.0.7
+### v0.1.0r084
+
+c6074e8 fixed issue with espressif tools  
+88088f7 added maaddress catch tip  
+
+### v0.0.7r072
 
 [![screenshot20220215_010838small](https://user-images.githubusercontent.com/423856/154026452-cd96ca60-f828-4463-8909-a6da1e114667.jpg)](https://www.youtube.com/watch?v=pZbMmkq8tUw)
 
-- [x] Full ESP-Now abstraction with broadcast support and easy callbacks
-- [x] Joystick and telemetry messages implemented with Nanopb protos
-- [x] Basi debug mode
-- [x] Full example included with M5Stack Joystick and Arkanoid game
-- [x] Full example of basic two motor robot (receiver)
-- [x] Basic examples   
-
-
+e590ace Full ESP-Now abstraction with broadcast support and easy callbacks  
+Joystick and telemetry messages implemented with Nanopb protos
+B11180e9 asic debug mode  
+a12cb41 Full example included with M5Stack Joystick and Arkanoid game
