@@ -226,7 +226,7 @@ fdede0d added basic workflow and Github CI stuff for testing
 
 ```bash
 e590ace ESP-Now abstraction with broadcast support and callbacks  
-Joystick and telemetry messages implemented with Nanopb protos
-B11180e9 asic debug mode  
-a12cb41 Full example included with M5Stack Joystick and Arkanoid game
+ce0db02 robot side Nanopb protos implementation
+11180e9 Basic debug mode  
+a12cb41 Full example included with M5Stack Joystick and Arkanoid
 ```
