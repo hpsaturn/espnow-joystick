@@ -125,7 +125,7 @@ const uint8_t macAddress = joystick.getReceiverMacAddr(deviceId);
 
 More info in the `m5unified-joystick` example. A little demo of this feature here:
 
-[![ESPNow Joystick multiple receiver demo](https://github.com/hpsaturn/espnow-joystick/assets/423856/c4a59c87-6d21-4183-ac82-f89c8e1bc470)](https://youtu.be/FcnYnp4PD0Y)
+[![ESPNow Joystick multiple receiver demo](https://github-production-user-asset-6210df.s3.amazonaws.com/423856/282314318-c4a59c87-6d21-4183-ac82-f89c8e1bc470.jpg)](https://youtu.be/FcnYnp4PD0Y)
 
 You can catch the macaddress enabling the debug mode with `joystick.init(true)` on the setup.
 
