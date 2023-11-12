@@ -13,6 +13,8 @@ Abstraccion of ESP-Now and Protocol Buffers to have improved joystick for any ki
 - [x] Basic examples with differente hardware
 - [x] P2P option for handling single device
 - [x] ESP8266 support
+- [x] auto receivers detection. (mac address vector)
+- [x] Dynamic joystick (select one of multi target detected)
 - [ ] Custom proto definitions
 - [ ] Limit to only specific receiver (now the joystick handled many at the same time :D)
 
@@ -53,7 +55,6 @@ void loop() {
 
     joystick.sendJoystickMsg(jm);
 }
-
 ```
 
 ## Receiver Implementation
@@ -111,6 +112,20 @@ void loop() {
     joystick.sendJoystickMsg(jm,device1); 
 }
 ```
+
+## Multiple receivers handling
+
+The last version is able to generate a device Id vector of the devices detected. With it is possible retrieve its mac address of each one. For example:
+
+```cpp
+std::vector<uint32_t> receivers = joystick.getReceivers();
+uint32_t deviceId = receivers[0];
+const uint8_t macAddress = joystick.getReceiverMacAddr(deviceId);
+```
+
+More info in the `m5unified-joystick` example. A little demo of this feature here:
+
+[![ESPNow Joystick multiple receiver demo](https://github.com/hpsaturn/espnow-joystick/assets/423856/c4a59c87-6d21-4183-ac82-f89c8e1bc470)](https://youtu.be/FcnYnp4PD0Y)
 
 You can catch the macaddress enabling the debug mode with `joystick.init(true)` on the setup.
 

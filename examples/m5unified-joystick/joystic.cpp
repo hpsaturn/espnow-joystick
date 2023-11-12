@@ -73,7 +73,7 @@ void setSelection() {
   uint32_t deviceId = receivers[macAddSelected-1];
   Serial.printf("mac selected: [%i] %04d ", macAddSelected, deviceId);
   Serial.printf("[%s]\r\n",joystick.getFormattedMacAddr(joystick.getReceiverMacAddr(deviceId)).c_str());
-  memcpy(&macAdd, joystick.getReceiverMacAddr(receivers[macAddSelected-1]), 6);
+  memcpy(&macAdd, joystick.getReceiverMacAddr(deviceId), 6);
 }
 
 void drawReceivers() {
