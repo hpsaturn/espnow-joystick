@@ -1,8 +1,10 @@
 #!/bin/bash
+
 ######################################################
 # CanAirIO deploy release utility
+#
 # Author: @hpsaturn
-# 2021-2022
+# 2021
 ######################################################
 
 SRC_VER=`cat library.properties | grep version | sed -n -e 's/^.*version=//p'`
@@ -13,10 +15,7 @@ SRC_REV=`cat src/${LIB_NAM}.hpp | grep CSL_REVISION | awk '{ print $3 }'`
 DATE=`date +%Y%m%d`
 RELDIR="releases"
 RELNAME="${LIB_NAM}-${SRC_VER}.tar.gz"
-OUTPUT="${RELDIR}/${RELNAME}" 
-
-REPO_OWNER=hpsaturn
-REPO_TARGET=espnow-joystick
+OUTPUT="${RELDIR}/${RELNAME}"
 
 showHelp () {
   echo ""
@@ -58,15 +57,36 @@ validate_branch () {
 }
 
 clean () {
+  rm -rf .pio
   rm -f $OUTPUT
 }
 
-runtest () {
-  pio run --target clean && pio run 
+runtest () {  
+  current_dir=`pwd`
+  echo ""
+  echo "***********************************************"
+  echo "** TESTING: $2"
+  echo "***********************************************"
+  echo ""
+  cd $1
+  pio run -s 
+  echo ""
+  echo "***********************************************"
+  echo "** TEST DONE ON: $2"
+  echo "***********************************************"
+  echo ""
+  cd $current_dir
+} 
+
+runtests () {
+   runtest "examples/advanced_sensirion" "Advanced Sensirion"
+   runtest "examples/ttgo_tdisplay_s3" "TTGO T-Display S3"
+   runtest "./" "All architectures"
 }
 
 build () {
-
+  
+  clean
   echo ""
   echo "***********************************************"
   echo "** Building rev$SRC_REV ($SRC_VER)"
@@ -81,6 +101,7 @@ build () {
   echo "***********************************************"
   echo ""
   md5sum $OUTPUT
+  du -hs $OUTPUT
   echo ""
 }
 
@@ -90,8 +111,12 @@ publish_release () {
   echo "********** Publishing release *****************" 
   echo "***********************************************"
   echo ""
+  echo "Publishing release: v${SRC_VER} rev${SRC_REV}" 
+  echo "uploading: ${OUTPUT}"
   COMMIT_LOG=`git log -1 --format='%ci %H %s'`
-  github-release upload --owner ${REPO_OWNER} --repo ${REPO_TARGET} --tag "v${SRC_VER}" --release-name "v${SRC_VER} rev${SRC_REV}" --body "${COMMIT_LOG}" $OUTPUT
+  git tag -a "v${SRC_VER}" -m "release v${SRC_VER} rev${SRC_REV}"
+  git push origin "v${SRC_VER}"
+  git log -n 10 --pretty=format:"%h %s" | gh release create "v${SRC_VER}" -F - -t "v${SRC_VER} rev${SRC_REV}" -p ${OUTPUT} 
   echo ""
   echo "***********************************************"
   echo "*************     done    *********************" 
@@ -114,7 +139,7 @@ else
       ;;
 
     test)
-      runtest 
+      runtests
       ;;
 
     help)

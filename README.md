@@ -4,6 +4,14 @@
 
 Abstraccion of ESP-Now and Protocol Buffers to have improved joystick for any kind of hardware, with a simple callback implementations.
 
+<table>
+  <tr>
+    <td>
+      Don't forget to star ⭐ this repository
+    </td>
+  </tr>
+</table>
+
 ## TODO
 
 - [x] ESP-Now abstraction (broadcast only for now)
@@ -131,7 +139,7 @@ You can catch the macaddress enabling the debug mode with `joystick.init(true)` 
 
 ## Proto Definitions
 
-Only for information, **you don't need to do anything here**. This the current payload protocol that use the library for default. But you only need set the messages like the examples, i.e: `jm.bA = 1;` in your code.
+Only for information, **you don't need to do anything here**. This is the current payload protocol that use the library for default. But you only need set the messages like the examples, i.e: `jm.bA = 1;` in your code.
 
 ```cpp
 syntax = "proto2";
@@ -173,14 +181,23 @@ In the next version the idea its maybe pass a custom proto for improve the size 
 
 ### v0.1.0r084
 
-c6074e8 fixed issue with espressif tools  
-88088f7 added maaddress catch tip  
+```bash
+a1a1403 M5Unified version with receiver selection feature (BtnA)
+27b222d added env for multi receiver handling demo and sample
+def35a4 initial implementation with M5Unified library.
+8b68b1b auto detection of receivers and methods to handled it
+4444222 new esp8266 support. Improved SDK optimizations
+c6074e8 fixed issue with espressif tools
+88088f7 added macaddress catch tip
+```
 
 ### v0.0.7r072
 
 [![screenshot20220215_010838small](https://user-images.githubusercontent.com/423856/154026452-cd96ca60-f828-4463-8909-a6da1e114667.jpg)](https://www.youtube.com/watch?v=pZbMmkq8tUw)
 
+```bash
 e590ace Full ESP-Now abstraction with broadcast support and easy callbacks  
 Joystick and telemetry messages implemented with Nanopb protos
 B11180e9 asic debug mode  
 a12cb41 Full example included with M5Stack Joystick and Arkanoid game
+```
