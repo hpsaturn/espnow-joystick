@@ -2,7 +2,7 @@
 
 # ESPNow Joystick
 
-Abstraccion of ESP-Now and Protocol Buffers to have improved joystick for any kind of hardware, with a simple callback implementations.
+Abstraccion of ESP-Now and Protocol Buffers to have improved joystick for any kind of hardware, with a simple callback implementation.
 
 <table>
   <tr>
@@ -26,7 +26,8 @@ Abstraccion of ESP-Now and Protocol Buffers to have improved joystick for any ki
 - [ ] Custom proto definitions
 - [ ] Limit to only specific receiver (now the joystick handled many at the same time :D)
 
-[Demo video](https://www.youtube.com/watch?v=pZbMmkq8tUw)
+[Demo video1](https://www.youtube.com/watch?v=pZbMmkq8tUw)
+[Demo video2](https://youtu.be/FcnYnp4PD0Y?si=3FyaXl4QsYyuY-1y)
 
 ## Joystick Implementation
 
@@ -67,7 +68,7 @@ void loop() {
 
 ## Receiver Implementation
 
-You only need pass the Telemetry message if you want, it is not mandatory, and implement the joystick callbacs:
+You only need pass the Telemetry message if you want, it is not mandatory, and implement the joystick callbacks to receive the parameters for your receiver:
 
 ```cpp
 EspNowJoystick joystick;
@@ -120,6 +121,8 @@ void loop() {
     joystick.sendJoystickMsg(jm,device1); 
 }
 ```
+
+**Note:** in the last version, you don't need specify the mac address of the receiver target. The library can store the mac address detected joystick around, and you are able select it from a simple vector. Please see bellow:
 
 ## Multiple receivers handling
 
@@ -191,12 +194,24 @@ c6074e8 fixed issue with espressif tools
 88088f7 added macaddress catch tip
 ```
 
+### v0.0.9rev083
+
+```bash
+d318618 rev083v0.0.9 Fixed telemetry issue when are multiple targets
+24e74bd added basic filter for telemetry when exist a P2P target
+1f64c44 fixed issues with new error callback documentation and added p2p section
+84fbe0a fixed issue with view badge count
+fdede0d added basic workflow and Github CI stuff for testing
+572dca3 P2P option for handling single device
+3e84e1c p2p methods working and fixed issue with error callback
+```
+
 ### v0.0.7r072
 
 [![screenshot20220215_010838small](https://user-images.githubusercontent.com/423856/154026452-cd96ca60-f828-4463-8909-a6da1e114667.jpg)](https://www.youtube.com/watch?v=pZbMmkq8tUw)
 
 ```bash
-e590ace Full ESP-Now abstraction with broadcast support and easy callbacks  
+e590ace ESP-Now abstraction with broadcast support and callbacks  
 Joystick and telemetry messages implemented with Nanopb protos
 B11180e9 asic debug mode  
 a12cb41 Full example included with M5Stack Joystick and Arkanoid game
