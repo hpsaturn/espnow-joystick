@@ -52,7 +52,7 @@ class MyTelemetryCallbacks : public EspNowTelemetryCallbacks{
     };
 };
 
-void drawValues(uint8_t ax, uint8_t ay, uint8_t az) {
+void drawJoystickValues(uint8_t ax, uint8_t ay, uint8_t az) {
     Disbuff.fillRect(0, 30, 80, 130, BLACK);
     Disbuff.setTextColor(BLUE);
     Disbuff.setCursor(10, 26);
@@ -86,7 +86,7 @@ void updateDisplay(uint8_t ax, uint8_t ay, uint8_t az) {
         else
             Disbuff.pushImage(0, 0, 20, 20, (uint16_t *)connect_off);
         Disbuff.pushSprite(0, 0);
-        drawValues(ax, ay, az);
+        drawJoystickValues(ax, ay, az);
         M5.update();
         if (millis() - heartBeatStamp > 1000) {
             // Serial.println("Heartbeat timeout");
