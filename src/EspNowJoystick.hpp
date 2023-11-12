@@ -78,6 +78,9 @@ class EspNowJoystick {
     /// print all receivers detected in the current session
     void printReceivers();
 
+    /// utility for print formatted mac address 
+    std::string getFormattedMacAddr(const uint8_t *mac);
+
     /// getter to retreive all receivers vector
     std::vector<uint32_t> getReceivers();
 
@@ -95,8 +98,8 @@ class EspNowJoystick {
     /// current receiver callback
     EspNowTelemetryCallbacks* _pEspNowTelemetryCallbacks = nullptr;
     
-    /// the current macaddress target for msgs to specific device
-    const uint8_t *targetAddress = nullptr; 
+    /// current mac target (default: broadcasting)
+    uint8_t targetAddress [6] = {0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF};
     
     /// devmode for improve verbose output
     bool devmode = false;
@@ -105,8 +108,6 @@ class EspNowJoystick {
    private:
     
     String getDeviceId();
-
-    uint8_t broadcastAddress[6] = {0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF};
 
     size_t encodeJoystickMsg(JoystickMessage jm);
     

@@ -34,6 +34,12 @@ void formatMacAddress(const uint8_t *macAddr, char *buffer, int maxLength) {
     snprintf(buffer, maxLength, "%02x:%02x:%02x:%02x:%02x:%02x", macAddr[0], macAddr[1], macAddr[2], macAddr[3], macAddr[4], macAddr[5]);
 }
 
+std::string EspNowJoystick::getFormattedMacAddr(const uint8_t *macAddress){
+    char macStr[18];
+    formatMacAddress(macAddress, macStr, 18);
+    return std::string(macStr);
+}
+
 void printMacAddress(const uint8_t * macAddress){
     char macStr[18];
     formatMacAddress(macAddress, macStr, 18);
@@ -52,7 +58,7 @@ bool EspNowJoystick::sendJoystickMsg(JoystickMessage jm) {
 }
 
 bool EspNowJoystick::sendJoystickMsg(JoystickMessage jm, const uint8_t* mac){
-    targetAddress = mac;
+    memcpy(&targetAddress, mac, 6);
     return sendMessage(encodeJoystickMsg(jm), mac);
 }
 
@@ -180,7 +186,7 @@ void telemetryRecvCallback(const uint8_t *macAddr, const uint8_t *data, int data
 void telemetryRecvCallback(uint8_t *macAddr, uint8_t *data, uint8_t dataLen) {
 #endif
     saveReceiver(macAddr);
-    if (joystick.targetAddress != nullptr && memcmp(joystick.targetAddress, macAddr, 6) != 0) return;
+    // if (memcmp(joystick.targetAddress, macAddr, 6) != 0) return;
     #ifdef ARDUINO_ARCH_ESP32
     int msgLen = min(ESP_NOW_MAX_DATA_LEN, dataLen);
     #else
@@ -195,7 +201,7 @@ void telemetrySendCallback(const uint8_t *macAddr, int status) {
 }
 
 bool EspNowJoystick::sendMessage(uint32_t msglen) {
-    return sendMessage(msglen, broadcastAddress);    
+    return sendMessage(msglen, targetAddress);    
 }
 
 bool EspNowJoystick::sendMessage(uint32_t msglen, const uint8_t *mac) {
