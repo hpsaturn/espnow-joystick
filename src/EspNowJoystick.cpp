@@ -264,12 +264,6 @@ TelemetryMessage EspNowJoystick::newTelemetryMsg() {
     return tm;
 }
 
-// std::string EspNowJoystick::getFormattedMAC(const uint8_t *macAddress){
-//     char macStr[18];
-//     formatMacAddress(macAddress, macStr, 18);
-//     return std::string(macStr);
-// }
-
 String EspNowJoystick::getDeviceId() { 
     uint32_t chipId = 0;
     #ifdef ARDUINO_ARCH_ESP32
