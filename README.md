@@ -140,6 +140,20 @@ More info in the `m5unified-joystick` example. A little demo of this feature her
 
 You can catch the macaddress enabling the debug mode with `joystick.init(true)` on the setup.
 
+## Examples
+
+For build and upload the examples here, with [PlatformIO](https://platformio.org/) is more easy, for example from command line you able to upload the M5Stack Joystick firmware, for M5StickC and M5StickCPlus with a simple:
+
+```bash
+pio run -e m5unified-joystick --target upload
+```
+
+With VSCode and PlatformIO plugin, you only need select the `env` in the bottom bar to `m5unified-joystick` and upload it.
+
+Also you can make a [DC motors tank](https://github.com/hpsaturn/espnow-joystick/blob/master/examples/robot/robot.cpp) or Servo Motors [Mini-tank](https://github.com/hpsaturn/mini-tank#readme).
+
+For `Arduino IDE` maybe is a little more complicated because the Arduino IDE dependencies resolver is very bad, but you only need download [this library](https://github.com/hpsaturn/espnow-joystick/releases) and also the [nanopb library](https://github.com/nanopb/nanopb/releases/tag/nanopb-0.4.8)
+
 ## Proto Definitions
 
 Only for information, **you don't need to do anything here**. This is the current payload protocol that use the library for default. But you only need set the messages like the examples, i.e: `jm.bA = 1;` in your code.
