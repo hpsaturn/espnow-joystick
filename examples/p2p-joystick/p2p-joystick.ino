@@ -5,6 +5,7 @@ EspNowJoystick joystick;
 JoystickMessage jm;
 bool receiverConnected;
 
+// custom mac address target (see m5unified example for dynamic example)
 const uint8_t device1[6] = {0x3C, 0x61, 0x05, 0x0c, 0x93, 0xb8};
 
 // callback to telemetries values (not mandatory)
