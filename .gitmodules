@@ -1,0 +1,3 @@
+[submodule "examples/mini-tank"]
+	path = examples/mini-tank
+	url = https://github.com/hpsaturn/mini-tank.git
