@@ -79,8 +79,8 @@ runtest () {
 } 
 
 runtests () {
-   runtest "examples/advanced_sensirion" "Advanced Sensirion"
-   runtest "examples/ttgo_tdisplay_s3" "TTGO T-Display S3"
+   runtest "examples/mini-tank" "Mini Tank"
+   runtest "examples/arkanoid" "Arkanoid"
    runtest "./" "All architectures"
 }
 
