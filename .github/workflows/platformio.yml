@@ -32,4 +32,8 @@ jobs:
       - name: Submitted library code test
         run: |
           pio run
+      - name: Compatibility test
+        run: |
+          cd examples/arkanoid
+          pio run
       

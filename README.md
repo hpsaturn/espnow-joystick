@@ -150,7 +150,7 @@ pio run -e m5unified-joystick --target upload
 
 With VSCode and PlatformIO plugin, you only need select the `env` in the bottom bar to `m5unified-joystick` and upload it.
 
-Also you can make a [DC motors tank](https://github.com/hpsaturn/espnow-joystick/blob/master/examples/robot/robot.cpp) or Servo Motors [Mini-tank](https://github.com/hpsaturn/mini-tank#readme).
+Also you can make a [DC motors tank](https://github.com/hpsaturn/espnow-joystick/blob/master/examples/robot/robot.cpp) or a Servo Motors [Mini-tank](https://github.com/hpsaturn/mini-tank#readme) or Arkanoid Game receiver. See the examples directory.
 
 For `Arduino IDE` maybe is a little more complicated because the Arduino IDE dependencies resolver is very bad, but you only need download [this library](https://github.com/hpsaturn/espnow-joystick/releases) and also the [nanopb library](https://github.com/nanopb/nanopb/releases/tag/nanopb-0.4.8)
 
