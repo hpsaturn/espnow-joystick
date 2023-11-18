@@ -32,16 +32,15 @@ jobs:
       - name: Architecture tests
         run: |
           pio run
-      - name: Integration tests
+      - name: Integration Joystick tests
         run: |
           cd examples/m5unified-joystick
           pio run
-          cd ..
+      - name: Integration Receiver test1
           cd examples/arkanoid
           pio run
-          cd ..
+      - name: Integration Receiver test2
           cd examples/mini-tank
           pio run
-          cd ..
 
       
