@@ -26,7 +26,7 @@ Abstraccion of ESP-Now and Protocol Buffers to have improved joystick for any ki
 - [ ] Custom proto definitions
 - [ ] Limit to only specific receiver (now the joystick handled many at the same time :D)
 
-[Demo video1](https://www.youtube.com/watch?v=pZbMmkq8tUw)
+[Demo video1](https://www.youtube.com/watch?v=pZbMmkq8tUw)  
 [Demo video2](https://youtu.be/FcnYnp4PD0Y?si=3FyaXl4QsYyuY-1y)
 
 ## Joystick Implementation
@@ -142,17 +142,27 @@ You can catch the macaddress enabling the debug mode with `joystick.init(true)` 
 
 ## Examples
 
+**PlatformIO:**  
+
 For build and upload the examples here, with [PlatformIO](https://platformio.org/) is more easy, for example from command line you able to upload the M5Stack Joystick firmware, for M5StickC and M5StickCPlus with a simple:
 
 ```bash
-pio run -e m5unified-joystick --target upload
+cd examples/m5unified-joystick/
+pio run --target upload
 ```
 
-With VSCode and PlatformIO plugin, you only need select the `env` in the bottom bar to `m5unified-joystick` and upload it.
+or  
 
-Also you can make a [DC motors tank](https://github.com/hpsaturn/espnow-joystick/blob/master/examples/robot/robot.cpp) or a Servo Motors [Mini-tank](https://github.com/hpsaturn/mini-tank#readme) or Arkanoid Game receiver. See the examples directory.
+```bash
+cd examples/mini-tank/
+pio run --target upload
+```
 
-For `Arduino IDE` maybe is a little more complicated because the Arduino IDE dependencies resolver is very bad, but you only need download [this library](https://github.com/hpsaturn/espnow-joystick/releases) and also the [nanopb library](https://github.com/nanopb/nanopb/releases/tag/nanopb-0.4.8)
+Also you can make a [DC motors tank](https://github.com/hpsaturn/espnow-joystick/blob/master/examples/robot) or a servo motors [Mini-tank](https://github.com/hpsaturn/mini-tank#readme) or an [Arkanoid Game](https://github.com/hpsaturn/espnow-joystick/blob/master/examples/arkanoid) receiver. See the examples directory.
+
+**Arduino IDE:**
+
+For `Arduino IDE` maybe is a little more complicated because the Arduino IDE dependencies resolver is very bad, but you only need download [this library](https://github.com/hpsaturn/espnow-joystick/releases) and also the [nanopb library dependency](https://github.com/nanopb/nanopb/releases/tag/nanopb-0.4.8) and include these on `Include Library` via zip files.
 
 ## Proto Definitions
 
@@ -211,9 +221,9 @@ c6074e8 fixed issue with espressif tools
 ### v0.0.9rev083
 
 ```bash
-d318618 rev083v0.0.9 Fixed telemetry issue when are multiple targets
+d318618 rev083v0.0.9 Fixed telemetry issues on multiple targets
 24e74bd added basic filter for telemetry when exist a P2P target
-1f64c44 fixed issues with new error callback documentation and added p2p section
+1f64c44 new error callback documentation and added p2p section
 84fbe0a fixed issue with view badge count
 fdede0d added basic workflow and Github CI stuff for testing
 572dca3 P2P option for handling single device

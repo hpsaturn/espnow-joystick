@@ -1,6 +1,6 @@
 {
   "name": "EspNowJoystick",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "homepage":"https://github.com/hpsaturn/espnow-joystick",
   "keywords": 
   [ 
@@ -36,7 +36,6 @@
         ".github",
         ".travis.yml",
         ".gitignore",
-        "examples/mini-tank",
         "deploy.sh",
         "releases"
     ]
