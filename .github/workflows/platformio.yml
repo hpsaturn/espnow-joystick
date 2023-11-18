@@ -29,11 +29,19 @@ jobs:
           python -m pip install --upgrade pip
           pip install -U platformio
           platformio update
-      - name: Submitted library code test
+      - name: Architecture tests
         run: |
           pio run
-      - name: Compatibility test
+      - name: Integration tests
         run: |
+          cd examples/m5unified-joystick
+          pio run
+          cd ..
           cd examples/arkanoid
           pio run
+          cd ..
+          cd examples/mini-tank
+          pio run
+          cd ..
+
       
