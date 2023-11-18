@@ -37,9 +37,11 @@ jobs:
           cd examples/m5unified-joystick
           pio run
       - name: Integration Receiver test1
+        run: |
           cd examples/arkanoid
           pio run
       - name: Integration Receiver test2
+        run: |
           cd examples/mini-tank
           pio run
 
