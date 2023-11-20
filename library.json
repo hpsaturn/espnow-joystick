@@ -37,7 +37,8 @@
         ".travis.yml",
         ".gitignore",
         "deploy.sh",
-        "releases"
+        "releases",
+        "screenshots"
     ]
   },
   "authors":

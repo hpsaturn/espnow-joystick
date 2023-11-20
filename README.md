@@ -162,7 +162,15 @@ Also you can make a [DC motors tank](https://github.com/hpsaturn/espnow-joystick
 
 **Arduino IDE:**
 
-For `Arduino IDE` maybe is a little more complicated because the Arduino IDE dependencies resolver is very bad, but you only need download [this library](https://github.com/hpsaturn/espnow-joystick/releases) and also the [nanopb library dependency](https://github.com/nanopb/nanopb/releases/tag/nanopb-0.4.8) and include these on `Include Library` via zip files.
+For `Arduino IDE` is a little bit more complicated because the Arduino IDE dependencies resolver is very bad, but you only need first download and install the [Nanopb library](https://github.com/nanopb/nanopb/releases/tag/nanopb-0.4.8) using the `Include Library` section via zip file, and then with the **Library Manager** find **ESPNowJoystick** like this:
+
+![screenshot20231121_002715](https://github.com/hpsaturn/espnow-joystick/assets/423856/b655efdb-9dfb-411d-b265-a7398a1b9065)  
+
+**Troubleshooting**:
+
+![screenshot20231120_235544](https://github.com/hpsaturn/espnow-joystick/assets/423856/b6523921-efe3-40de-8b33-f0b730c9113a)
+
+Don't forget install first the [Nanopb library](https://github.com/nanopb/nanopb/releases/tag/nanopb-0.4.8)
 
 ## Proto Definitions
 
