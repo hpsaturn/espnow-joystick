@@ -36,8 +36,8 @@
 #include <vector>
 #include <string>
 
-#define CSL_VERSION "0.1.2"
-#define CSL_REVISION 086
+#define CSL_VERSION "0.1.3"
+#define CSL_REVISION 087
 
 class EspNowJoystickCallbacks;
 class EspNowTelemetryCallbacks;
