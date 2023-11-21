@@ -2,7 +2,7 @@
 
 # ESPNow Joystick
 
-Abstraccion of ESP-Now and Protocol Buffers to have improved joystick for any kind of hardware, with a simple callback implementation.
+Abstraction of ESP-Now and Protocol Buffers to have improved joystick for any kind of hardware, with a simple callback implementations.
 
 <table>
   <tr>
@@ -12,33 +12,32 @@ Abstraccion of ESP-Now and Protocol Buffers to have improved joystick for any ki
   </tr>
 </table>
 
-## TODO
+## Features
 
-- [x] ESP-Now abstraction (broadcast only for now)
+- [x] Full ESP-Now abstraction (broadcast, P2P, and auto)
 - [x] Nanopb protos implementation (improve payload and channel)
-- [x] Telemetry and Joystick callbacks
-- [x] Full joystick and receiver example on M5Stack Joytstick
-- [x] Basic examples with differente hardware
+- [x] Telemetry events and Joystick parameters callbacks
+- [x] Full joystick and receiver examples with a M5Stack Joytstick
 - [x] P2P option for handling single device
-- [x] ESP8266 support
-- [x] auto receivers detection. (mac address vector)
-- [x] Dynamic joystick (select one of multi target detected)
+- [x] Generic ESP32 and ESP8266 support
+- [x] Auto receivers detection. (Mac Address Vector)
+- [x] Dynamic joystick sample (select one of multi target detected)
+- [x] Added on the Arduino Library Manager for easy installation
 - [ ] Custom proto definitions
-- [ ] Limit to only specific receiver (now the joystick handled many at the same time :D)
 
 [Demo video1](https://www.youtube.com/watch?v=pZbMmkq8tUw)  
 [Demo video2](https://youtu.be/FcnYnp4PD0Y?si=3FyaXl4QsYyuY-1y)
 
 ## Joystick Implementation
 
-You only need pass the Joystick message and fill any of the possibilities, for example:
+You only need to pass the Joystick message and fill any of the possibilities, for example:
 
 ```cpp
 EspNowJoystick joystick;
 JoystickMessage jm;
 bool receiverConnected;
 
-// callback to telemetries values (not mandatory)
+// callback to telemetry values (not mandatory)
 class MyTelemetryCallbacks : public EspNowTelemetryCallbacks{
     void onTelemetryMsg(TelemetryMessage tm){
         receiverConnected = tm.e1;
@@ -54,11 +53,13 @@ void setup() {
 }
 
 void loop() {
-    uint8_t ax = map(random(0,100), 0, 100, 0, 200);  // any implementation, SPI, i2c, analog switchs
+    // any implementation, SPI, i2c, analog switchs
+    uint8_t ax = map(random(0,100), 0, 100, 0, 200);  
     uint8_t ay = map(random(0,100), 0, 100, 0, 200);
     uint8_t az = map(random(0,100), 0, 100, 0, 200);
 
-    jm.ay = ay;  // You can fill more variables. See the comm.proto definitions
+    // You are able to fill more variables. See the #proto-definition
+    jm.ay = ay;
     jm.ax = ax;
     jm.az = az;
 
@@ -68,7 +69,7 @@ void loop() {
 
 ## Receiver Implementation
 
-You only need pass the Telemetry message if you want, it is not mandatory, and implement the joystick callbacks to receive the parameters for your receiver:
+You only need to pass the Telemetry message if you want, and implement the joystick callbacks to receive the parameters for your receiver, it is not mandatory:
 
 ```cpp
 EspNowJoystick joystick;
@@ -111,7 +112,7 @@ void loop() {}
 
 ## P2P Implementation
 
-For send to specific device you only need specificate the address of the device, for example:
+For send to specific device, you only need to define the address of the device, for example:
 
 ```cpp
 const uint8_t device1[6] = {0x3C, 0x61, 0x05, 0x0c, 0x93, 0xb8};
@@ -121,6 +122,8 @@ void loop() {
     joystick.sendJoystickMsg(jm,device1); 
 }
 ```
+
+You able to catch the macaddress enabling the debug mode with `joystick.init(true)` on the setup.  
 
 **Note:** in the last version, you don't need specify the mac address of the receiver target. The library can store the mac address detected joystick around, and you are able select it from a simple vector. Please see bellow:
 
@@ -137,8 +140,6 @@ const uint8_t macAddress = joystick.getReceiverMacAddr(deviceId);
 More info in the `m5unified-joystick` example. A little demo of this feature here:
 
 [![ESPNow Joystick multiple receiver demo](https://github-production-user-asset-6210df.s3.amazonaws.com/423856/282314318-c4a59c87-6d21-4183-ac82-f89c8e1bc470.jpg)](https://youtu.be/FcnYnp4PD0Y)
-
-You can catch the macaddress enabling the debug mode with `joystick.init(true)` on the setup.
 
 ## Examples
 
@@ -166,51 +167,25 @@ For `Arduino IDE` is a little bit more complicated because the Arduino IDE depen
 
 ![screenshot20231121_002715](https://github.com/hpsaturn/espnow-joystick/assets/423856/b655efdb-9dfb-411d-b265-a7398a1b9065)  
 
+or download and install ESPNowJoystick from the [releases section](https://github.com/hpsaturn/espnow-joystick/releases).
+
 **Troubleshooting**:
+
+```cpp
+EspNowJoystick.hpp:31:10: fatal error: pb_decode.h: No such file or directory
+```
+
+or
 
 ![screenshot20231120_235544](https://github.com/hpsaturn/espnow-joystick/assets/423856/b6523921-efe3-40de-8b33-f0b730c9113a)
 
 Don't forget install first the [Nanopb library](https://github.com/nanopb/nanopb/releases/tag/nanopb-0.4.8)
 
-## Proto Definitions
+## Proto Definition
 
-Only for information, **you don't need to do anything here**. This is the current payload protocol that use the library for default. But you only need set the messages like the examples, i.e: `jm.bA = 1;` in your code.
+Only for information, **you don't need to do anything here**. This is the current payload [proto definition](https://github.com/hpsaturn/espnow-joystick/blob/master/src/comm.proto) that use the library for default. Thanks to this, you only need to set the messages like the examples, i.e: `jm.bA = 1;` in your code.
 
-```cpp
-syntax = "proto2";
-
-message JoystickMessage {
-    required sint32 ax = 1;  // left stick x position
-    required sint32 ay = 2;  // left stick y position
-    required sint32 az = 3;  // right stick z position
-    required sint32 aw = 4;  // right stick w position
-    required int32 bA = 5;   // buttonA data
-    required int32 bB = 6;   // buttonB data
-    required int32 bX = 7;   // buttonX data
-    required int32 bY = 8;   // buttonY data
-    required int32 bL = 9;   // buttonL data
-    required int32 bR = 10;  // buttonR data
-    required int32 bU = 11;  // buttonUp data
-    required int32 bD = 12;  // buttonDown data
-    required int32 ck = 13;  // check data
-}
-
-message TelemetryMessage {
-    required uint32 btl = 1; // battery level
-    required float  btv = 2; // battery voltage
-    required sint32 x = 3;   // x position
-    required sint32 y = 4;   // y position
-    required sint32 z = 5;   // z position
-    required bool e1 = 6;    // event1 data
-    required bool e2 = 7;    // event2 data
-    required bool e3 = 8;    // event3 data
-    required float t1 = 9;   // variable1 data
-    required float t2 = 10;  // variable2 data
-    required uint32 ck = 11; // check data
-}
-```
-
-In the next version the idea its maybe pass a custom proto for improve the size or extend the current protocol. The current version only consume 25 bytes on the Joystick message.
+In the next version, the idea is maybe pass a custom proto to improve the size or extend the current protocol. The current version only consumes 25 bytes on the Joystick message.
 
 ## Changelog
 
