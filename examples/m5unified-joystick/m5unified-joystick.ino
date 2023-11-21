@@ -145,7 +145,7 @@ void setup() {
   auto cfg = M5.config();
 
   M5.begin(cfg);
-  M5.Display.setBrightness(128);
+  M5.Display.setBrightness(96);
   w=M5.Display.width();
   h=M5.Display.height();
   disp.createSprite(w,h);
