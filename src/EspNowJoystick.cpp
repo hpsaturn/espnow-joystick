@@ -65,6 +65,10 @@ bool EspNowJoystick::sendJoystickMsg(JoystickMessage jm, const uint8_t* mac){
 size_t EspNowJoystick::encodeJoystickMsg(JoystickMessage jm) {
     pb_ostream_t stream = pb_ostream_from_buffer(send_buffer, sizeof(send_buffer));
     bool status = pb_encode(&stream, JoystickMessage_fields, &jm);
+    // Serial.printf("encode status %i\r\n",status);
+    #ifndef ARDUINO_ARCH_ESP32
+    delay(5); // ESP8266 needs it or die
+    #endif
     size_t message_length = stream.bytes_written;
     if (!status) {
         printf("Encoding failed: %s\n", PB_GET_ERROR(&stream));
@@ -288,11 +292,14 @@ bool EspNowJoystick::init(bool debug) {
         Serial.println("ESPNow Init Success");
         if(_pEspNowJoystickCallbacks != nullptr) {
             esp_now_register_recv_cb(joystickRecvCallback);
+            Serial.println("Registered Joystick callback");
             // esp_now_register_send_cb(telemetrySendCallback);
             return true;
         }
         else if(_pEspNowTelemetryCallbacks != nullptr) {
             esp_now_register_recv_cb(telemetryRecvCallback);
+            Serial.println("Registered Joystick callback");
+            delay(1000);
             // esp_now_register_send_cb(joystickSendCallback);
             return true;
         }

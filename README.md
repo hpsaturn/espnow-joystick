@@ -75,6 +75,11 @@ You only need to pass the Telemetry message if you want, and implement the joyst
 EspNowJoystick joystick;
 TelemetryMessage tm;
 
+// your implementation
+void setSpeed(int32_t ax, int32_t ay, int32_t az) {
+    Serial.printf("ax:%04i ay:%04i az:%04i\r\n", ax, ay, az);
+}
+
 // optional: Send telemetry or status of the receiver
 void sendHeartbeat() {
     static uint_least32_t timeStamp = 0;
@@ -88,11 +93,7 @@ void sendHeartbeat() {
 // Joystick data
 class MyJoystickCallback : public EspNowJoystickCallbacks {
     void onJoystickMsg(JoystickMessage jm){
-        if (jm.ck == 0x01) {
-            setSpeed(jm.ax - 100, jm.ay - 100, jm.az - 100);
-        } else {
-            setSpeed(0, 0, 0);
-        }
+        setSpeed(jm.ax, jm.ay, jm.az);
         sendHeartbeat();
     };
     void onError(const char *msg){
