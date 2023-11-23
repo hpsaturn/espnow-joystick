@@ -7,7 +7,7 @@ TelemetryMessage tm;
 
 // your implementation
 void setSpeed(int32_t ax, int32_t ay, int32_t az) {
-  Serial.printf("ax:%04i ay:%04i az:%04i\r\n", ax, ay, az);
+  Serial.printf("command: ax:%04i ay:%04i az:%04i\r\n", ax, ay, az);
 }
 
 // optional: Send telemetry or status of the receiver

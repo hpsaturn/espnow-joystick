@@ -65,13 +65,12 @@ bool EspNowJoystick::sendJoystickMsg(JoystickMessage jm, const uint8_t* mac){
 size_t EspNowJoystick::encodeJoystickMsg(JoystickMessage jm) {
     pb_ostream_t stream = pb_ostream_from_buffer(send_buffer, sizeof(send_buffer));
     bool status = pb_encode(&stream, JoystickMessage_fields, &jm);
-    // Serial.printf("encode status %i\r\n",status);
     #ifndef ARDUINO_ARCH_ESP32
     delay(5); // ESP8266 needs it or die
     #endif
     size_t message_length = stream.bytes_written;
     if (!status) {
-        printf("Encoding failed: %s\n", PB_GET_ERROR(&stream));
+        printf("Encoding failed: %s\r\n", PB_GET_ERROR(&stream));
         return 0;
     }
     return message_length;
@@ -81,7 +80,7 @@ bool joystickDecodeMessage(uint16_t message_length) {
     pb_istream_t stream = pb_istream_from_buffer(recv_buffer, message_length);
     bool status = pb_decode(&stream, JoystickMessage_fields, &_jm);
     if (!status) {
-        printf("Decoding joystick msg failed: %s\n", PB_GET_ERROR(&stream));
+        printf("Decoding joystick msg failed: %s\r\n", PB_GET_ERROR(&stream));
         return false;
     }
     if (joystick._pEspNowJoystickCallbacks != nullptr) {
@@ -126,7 +125,7 @@ size_t EspNowJoystick::encodeTelemetryMsg(TelemetryMessage tm) {
     bool status = pb_encode(&stream, TelemetryMessage_fields, &tm);
     size_t message_length = stream.bytes_written;
     if (!status) {
-        printf("Encoding Telemetry msg failed: %s\n", PB_GET_ERROR(&stream));
+        printf("Encoding Telemetry msg failed: %s\r\n", PB_GET_ERROR(&stream));
         return 0;
     }
     return message_length;
@@ -136,7 +135,7 @@ bool telemetryDecodeMessage(uint16_t message_length) {
     pb_istream_t stream = pb_istream_from_buffer(recv_buffer, message_length);
     bool status = pb_decode(&stream, TelemetryMessage_fields, &_tm);
     if (!status) {
-        printf("Decoding telemetry msg failed: %s\n", PB_GET_ERROR(&stream));
+        printf("Decoding telemetry msg failed: %s\r\n", PB_GET_ERROR(&stream));
         return false;
     }
     if (joystick._pEspNowTelemetryCallbacks != nullptr) {
@@ -225,7 +224,7 @@ bool EspNowJoystick::sendMessage(uint32_t msglen, const uint8_t *mac) {
         if (joystick.devmode) {
             Serial.println("Broadcast message success");
             printMacAddress(mac);
-            Serial.printf("Send message size: %i\n", msglen);
+            Serial.printf("Send message size: %i\r\n", msglen);
             printBuffer(send_buffer, msglen);
         }
         return true;
