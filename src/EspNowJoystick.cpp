@@ -70,7 +70,7 @@ size_t EspNowJoystick::encodeJoystickMsg(JoystickMessage jm) {
     #endif
     size_t message_length = stream.bytes_written;
     if (!status) {
-        printf("Encoding failed: %s\r\n", PB_GET_ERROR(&stream));
+        if(devmode) printf("Encoding failed: %s\r\n", PB_GET_ERROR(&stream));
         return 0;
     }
     return message_length;
@@ -80,7 +80,7 @@ bool joystickDecodeMessage(uint16_t message_length) {
     pb_istream_t stream = pb_istream_from_buffer(recv_buffer, message_length);
     bool status = pb_decode(&stream, JoystickMessage_fields, &_jm);
     if (!status) {
-        printf("Decoding joystick msg failed: %s\r\n", PB_GET_ERROR(&stream));
+        if(joystick.devmode) printf("Decoding joystick msg failed: %s\r\n", PB_GET_ERROR(&stream));
         return false;
     }
     if (joystick._pEspNowJoystickCallbacks != nullptr) {
@@ -125,7 +125,7 @@ size_t EspNowJoystick::encodeTelemetryMsg(TelemetryMessage tm) {
     bool status = pb_encode(&stream, TelemetryMessage_fields, &tm);
     size_t message_length = stream.bytes_written;
     if (!status) {
-        printf("Encoding Telemetry msg failed: %s\r\n", PB_GET_ERROR(&stream));
+        if(devmode) printf("Encoding Telemetry msg failed: %s\r\n", PB_GET_ERROR(&stream));
         return 0;
     }
     return message_length;
@@ -135,7 +135,7 @@ bool telemetryDecodeMessage(uint16_t message_length) {
     pb_istream_t stream = pb_istream_from_buffer(recv_buffer, message_length);
     bool status = pb_decode(&stream, TelemetryMessage_fields, &_tm);
     if (!status) {
-        printf("Decoding telemetry msg failed: %s\r\n", PB_GET_ERROR(&stream));
+        if(joystick.devmode) printf("Decoding telemetry msg failed: %s\r\n", PB_GET_ERROR(&stream));
         return false;
     }
     if (joystick._pEspNowTelemetryCallbacks != nullptr) {
