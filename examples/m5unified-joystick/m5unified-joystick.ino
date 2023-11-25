@@ -175,33 +175,17 @@ void setup() {
   disp.setTextColor(WHITE);
 }
 
+void sendMessage() {
+  // Serial.printf("sending: ax:%04i ay:%04i az:%04i\r\n", ax, ay, az);
+  joystick.sendJoystickMsg(jm, macAdd);
+}
+
 // sticks parameters
 const uint8_t center = 100;
 const uint8_t deathBand = 10;
+static uint_least32_t cTStamp = 0;
 
-void loop() {
-  // auto power off if receiver is not connected
-  if (!receiverConnected && suspendCount++ > 2000) {
-    Serial.println("not receiver detected. Turn off..");
-    Serial.println("Releasing receivers:");
-    joystick.printReceivers();
-    delay(1000);
-    M5.Power.powerOff();
-  }
-
-  if (M5.BtnB.wasClicked() && btnDebounce++ > 15) {
-    delay(1000);
-    M5.Power.powerOff();
-  }
-
-  if (M5.BtnA.wasClicked() && btnDebounce++ > 25) {
-    // Serial.printf("mode: %s\r\n", mode ? "stats" : "receivers");
-    if (!mode) setSelection();
-    mode = false;
-    modeRestoreCount = 0;
-    btnDebounce = 0;
-  }
-
+void readValues() {
   for (int i = 0; i < 4; i++) {
     AngleBuff[i] = I2CRead16bit(0x50 + i * 2);
   }
@@ -217,10 +201,41 @@ void loop() {
   jm.ck = ck;
 
   if ((abs(ax - center) < deathBand) && (abs(ay - center) < deathBand) && (abs(az - center) < deathBand)) {
-    delay(100); // on death band, wait for improve power consumption
-  } 
-
-  // Serial.printf("sending: ax:%04i ay:%04i az:%04i\r\n", ax, ay, az);
-  if (jm.ck != 0x00) joystick.sendJoystickMsg(jm, macAdd);
+    // on death band, wait for improve power consumption
+    if (millis() - cTStamp > 100) {
+      cTStamp = millis();
+      sendMessage();
+    }
+  }
+  else
+    sendMessage();
+  
   updateDisplay(ax, ay, az);
+}
+
+void loop() {
+  // auto power off if receiver is not connected
+  if (!receiverConnected && suspendCount++ > 3000) {
+    Serial.println("not receiver detected. Turn off..");
+    Serial.println("Releasing receivers:");
+    joystick.printReceivers();
+    delay(1000);
+    M5.Power.powerOff();
+  }
+
+  if (M5.BtnB.wasClicked() && btnDebounce++ > 15) {
+    delay(100);
+    M5.Power.powerOff();
+  }
+
+  if (M5.BtnA.wasClicked() && btnDebounce++ > 25) {
+    // Serial.printf("mode: %s\r\n", mode ? "stats" : "receivers");
+    if (!mode) setSelection();
+    mode = false;
+    modeRestoreCount = 0;
+    btnDebounce = 0;
+  }
+
+  readValues();
+ 
 }
