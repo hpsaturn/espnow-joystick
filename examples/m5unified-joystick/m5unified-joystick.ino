@@ -175,9 +175,47 @@ void setup() {
   disp.setTextColor(WHITE);
 }
 
+void sendMessage() {
+  // Serial.printf("sending: ax:%04i ay:%04i az:%04i\r\n", ax, ay, az);
+  joystick.sendJoystickMsg(jm, macAdd);
+}
+
+// sticks parameters
+const uint8_t center = 100;
+const uint8_t deathBand = 10;
+static uint_least32_t cTStamp = 0;
+
+void readValues() {
+  for (int i = 0; i < 4; i++) {
+    AngleBuff[i] = I2CRead16bit(0x50 + i * 2);
+  }
+
+  uint8_t ck = 0x01; // default command
+  uint8_t ax = map(AngleBuff[0], 0, 4000, 0, 200);
+  uint8_t ay = map(AngleBuff[1], 0, 4000, 0, 200);
+  uint8_t az = map(AngleBuff[2], 0, 4000, 0, 200);
+
+  jm.ay = ay;
+  jm.ax = ax;
+  jm.az = az;
+  jm.ck = ck;
+
+  if ((abs(ax - center) < deathBand) && (abs(ay - center) < deathBand) && (abs(az - center) < deathBand)) {
+    // on death band, wait for improve power consumption
+    if (millis() - cTStamp > 100) {
+      cTStamp = millis();
+      sendMessage();
+    }
+  }
+  else
+    sendMessage();
+  
+  updateDisplay(ax, ay, az);
+}
+
 void loop() {
   // auto power off if receiver is not connected
-  if (!receiverConnected && suspendCount++ > 2000) {
+  if (!receiverConnected && suspendCount++ > 3000) {
     Serial.println("not receiver detected. Turn off..");
     Serial.println("Releasing receivers:");
     joystick.printReceivers();
@@ -186,7 +224,7 @@ void loop() {
   }
 
   if (M5.BtnB.wasClicked() && btnDebounce++ > 15) {
-    delay(1000);
+    delay(100);
     M5.Power.powerOff();
   }
 
@@ -198,26 +236,6 @@ void loop() {
     btnDebounce = 0;
   }
 
-  for (int i = 0; i < 4; i++) {
-    AngleBuff[i] = I2CRead16bit(0x50 + i * 2);
-  }
-
-  uint8_t ax = map(AngleBuff[0], 0, 4000, 0, 200);
-  uint8_t ay = map(AngleBuff[1], 0, 4000, 0, 200);
-  uint8_t az = map(AngleBuff[2], 0, 4000, 0, 200);
-  uint8_t ck = 0x00;
-
-  if ((ax > 110) || (ax < 110) ||
-      (ay > 110) || (ay < 110) ||
-      (az > 110) || (az < 110)) {
-    ck = 0x01;
-  }
-
-  jm.ay = ay;
-  jm.ax = ax;
-  jm.az = az;
-  jm.ck = ck;
-
-  if (jm.ck != 0x00) joystick.sendJoystickMsg(jm, macAdd);
-  updateDisplay(ax, ay, az);
+  readValues();
+ 
 }
